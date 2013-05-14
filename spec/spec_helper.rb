@@ -15,3 +15,7 @@ RSpec.configure do |config|
   #     --seed 1234
   config.order = 'random'
 end
+
+require 'webmock/rspec'
+
+require_relative '../lib/stampr'

@@ -32,7 +32,36 @@ Or install it yourself as:
 Usage
 -----
 
-TODO: Write usage instructions here
+Example of sending a letter via the simple API:
+
+```ruby
+require 'stampr'
+
+stampr = Stampr::Client.new "username", "password"
+
+stampr.send "Bil Bas", "Basil Brush", body
+
+stampr.send "Bil Bas", "Reginald T Womble", body
+```
+
+More complex example:
+
+```ruby
+require 'stampr'
+
+batch = Stampr::Batch.new ...
+batch.create
+
+config = Stampr::Config.new ...
+config.create
+
+Mailing.new batch: batch, config: config do |m|
+  m.to = to
+  m.from = from
+  m.body = body
+end
+
+```
 
 
 Contributing
