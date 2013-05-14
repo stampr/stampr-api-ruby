@@ -14,19 +14,19 @@ Installation
 Add this line to your application's Gemfile:
 
 ```ruby
-    gem 'stampr'
+gem 'stampr'
 ```
 
 And then execute:
 
 ```bash
-    $ bundle
+$ bundle
 ```
 
 Or install it yourself as:
 
 ```bash
-    $ gem install stampr
+$ gem install stampr
 ```
 
 Usage
@@ -39,9 +39,9 @@ require 'stampr'
 
 stampr = Stampr::Client.new "username", "password"
 
-stampr.send "Bil Bas", "Basil Brush", body
+stampr.send my_address, dest_address_1, body
 
-stampr.send "Bil Bas", "Reginald T Womble", body
+stampr.send my_address, dest_address_2, body
 ```
 
 More complex example:
@@ -49,13 +49,13 @@ More complex example:
 ```ruby
 require 'stampr'
 
-batch = Stampr::Batch.new ...
-batch.create
-
-config = Stampr::Config.new ...
+config = Stampr::Config.new
 config.create
 
-Mailing.new batch: batch, config: config do |m|
+batch = Stampr::Batch.new config
+batch.create
+
+Mailing.new batch: batch do |m|
   m.to = to
   m.from = from
   m.body = body

@@ -3,8 +3,7 @@ module Stampr
     attr_accessor :from, :to, :body
 
     def initialize(options = {})
-      @batch = options[:batch]
-      @config = options[:config]
+      @batch = options[:batch] || Batch.new
 
       if block_given?
         yield self 
