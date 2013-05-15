@@ -37,11 +37,11 @@ Example of sending a letter via the simple API:
 ```ruby
 require 'stampr'
 
-stampr = Stampr::Client.new "username", "password"
+client = Stampr::Client.new "username", "password"
 
-stampr.send my_address, dest_address_1, body
+client.send my_address, dest_address_1, body1
 
-stampr.send my_address, dest_address_2, body
+client.send my_address, dest_address_2, body2
 ```
 
 More complex example:
@@ -49,17 +49,54 @@ More complex example:
 ```ruby
 require 'stampr'
 
-config = Stampr::Config.new
+client = Stampr::Client.new "username", "password"
+
+# Config can be shared by batches.
+config = Stampr::Config.new client: client
+
+# Batches contain one or more mailings.
+Stampr::Batch.new config: config do
+  mailing do
+    to dest_address_1
+    from my_address
+    body body1
+  end
+
+  mailing do
+    to dest_address_2
+    from my_address
+    body body2
+  end
+end
+
+```
+
+Complex example without using blocks:
+
+```ruby
+require 'stampr'
+
+client = Stampr::Client.new "username", "password"
+
+# Config can be shared by batches.
+config = Stampr::Config.new client: client
 config.create
 
-batch = Stampr::Batch.new config
+# Batches contain one or more mailings.
+batch = Stampr::Batch.new config: config
 batch.create
 
-Mailing.new batch: batch do |m|
-  m.to = to
-  m.from = from
-  m.body = body
-end
+mailing1 = Mailing.new batch: batch
+mailing1.to = dest_address_1
+mailing1.from = my_address
+mailing1.body = body1
+mailing1.send
+
+mailing2 = Mailing.new batch: batch
+mailing2.to = dest_address_2
+mailing2.from = my_address
+mailing2.body = body2
+mailing2.send
 
 ```
 
