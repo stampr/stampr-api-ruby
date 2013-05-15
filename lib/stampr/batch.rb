@@ -4,6 +4,19 @@ module Stampr
 
     attr_reader :id, :config_id, :template, :status
 
+    class << self
+      # Get the config
+      # @return [Stampr::Config]
+      def [](id)
+        raise TypeError, "Expecting positive Integer" unless id.is_a?(Integer) && id > 0
+
+        batches = Stampr.client.get ["batches", id]
+        batch = batches.first
+        self.new Stampr.symbolize_hash_keys(batch)       
+      end
+    end
+
+
     # @option :config_id [Integer]
     # @option :config [Stampr::Config]
     # @option :template [String]

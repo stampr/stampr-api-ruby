@@ -19,11 +19,7 @@ module Stampr
 
         configs = Stampr.client.get ["configs", id]
         config = configs.first
-        self.new symbolize(config)       
-      end
-
-      def symbolize(hash)
-        Hash[hash.map {|k, v| [k.to_sym, v]}]
+        self.new Stampr.symbolize_hash_keys(config)       
       end
 
       def each
@@ -37,7 +33,7 @@ module Stampr
           break if configs.empty?
 
           configs.each do |config|
-            yield self.new(symbolize(config))
+            yield self.new(Stampr.symbolize_hash_keys(config))
           end   
 
           i += 1

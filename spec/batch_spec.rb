@@ -94,4 +94,19 @@ describe Stampr::Batch do
       -> { subject.delete.should eq true }.should raise_error Stampr::APIError, "Can't #delete before #create"
     end
   end
+
+
+  describe ".[]" do
+    it "should retreive a specific batch" do
+      request = stub_request(:get, "https://user:pass@testing.dev.stam.pr/api/batches/2").
+         with(headers: {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'User-Agent'=>'Ruby'}).
+         to_return(status: 200, body: json_data("batch_index"), headers: {})
+
+      batch = Stampr::Batch[2]
+
+      batch.id.should eq 2
+
+      request.should have_been_made
+    end
+  end
 end
