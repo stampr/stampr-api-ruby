@@ -8,8 +8,10 @@ require_relative "stampr/mailing"
 require_relative "stampr/version"
 
 module Stampr
-  class HTTPError < StandardError; end
-  class RequestError < StandardError; end
+  class Error < StandardError; end
+  class HTTPError < Error; end
+  class RequestError < Error; end
+  class APIError < Error; end
 
   class << self
     attr_reader :client

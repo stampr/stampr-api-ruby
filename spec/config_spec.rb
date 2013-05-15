@@ -32,7 +32,7 @@ describe Stampr::Config do
 
 
   describe "#initialize from data" do
-    let(:data) { Hash[JSON.parse(json_data("config_create")).map {|k, v| [k.to_sym, v.is_a?(String) ? v.to_sym : v]}] }
+    let(:data) { Hash[JSON.parse(json_data("config_create")).map {|k, v| [k.to_sym, v]}] }
     let(:subject) { described_class.new data }
 
     it "should do have a size" do

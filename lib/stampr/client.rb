@@ -65,7 +65,7 @@ module Stampr
     private
     def api(action, path, params = nil)
       path = Array(path).join "/"
-
+      
       response = if params
          @client[path].public_send action, params, accept: :json
       else

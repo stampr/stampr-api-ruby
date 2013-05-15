@@ -23,7 +23,7 @@ module Stampr
       end
 
       def symbolize(hash)
-        Hash[hash.map {|k, v| [k.to_sym, v.is_a?(String) ? v.to_sym : v]}]
+        Hash[hash.map {|k, v| [k.to_sym, v]}]
       end
 
       def each
@@ -51,10 +51,10 @@ module Stampr
     # @option :output [:single]
     # @option :return_envelope [false]
     def initialize(options = {})
-      @size = options[:size] || DEFAULT_SIZE
-      @turnaround = options[:turnaround] || DEFAULT_TURNAROUND
-      @style = options[:style] || DEFAULT_STYLE
-      @output = options[:output] || DEFAULT_OUTPUT
+      @size = (options[:size] || DEFAULT_SIZE).to_sym
+      @turnaround = (options[:turnaround] || DEFAULT_TURNAROUND).to_sym
+      @style = (options[:style] || DEFAULT_STYLE).to_sym
+      @output = (options[:output] || DEFAULT_OUTPUT).to_sym
       # :returnenvelope is from json, return_envelope is more ruby-friendly for end-users.
       @return_envelope = options[:returnenvelope] || options[:return_envelope] || DEFAULT_RETURN_ENVELOPE
       @id = options[:config_id] || nil
