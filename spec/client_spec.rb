@@ -1,12 +1,14 @@
 require_relative "spec_helper"
 
 describe Stampr::Client do
-  let(:subject) { described_class.new "user", "pass" }
+  before :each do
+    Stampr.authenticate "user", "pass"
+  end
 
   describe "initialize" do
     it "should create a rest-client" do
       RestClient::Resource.should_receive("new").with("https://testing.dev.stam.pr/api", "user", "pass")
-      subject
+      Stampr.authenticate "user", "pass"
     end
   end
 

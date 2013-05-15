@@ -3,22 +3,37 @@ module Stampr
   #
   # TODO: Allow attributes to be set.
   class Config
-    attr_reader :client
+    DEFAULT_SIZE = :standard
+    DEFAULT_TURNAROUND = :threeday
+    DEFAULT_STYLE = :color
+    DEFAULT_OUTPUT = :single
+    DEFAULT_RETURN_ENVELOPE = false
+
     attr_reader :size, :turnaround, :style, :output, :return_envelope
 
-    # @param client [Stampr::Client]
-    def initialize(client, options={})
-      raise TypeError, "client must be a Stampr::Client" unless client.is_a? Stampr::Client
+    class << self
+      # Get the config
+      # @return [Stampr::Config]
+      def [](id)
+        raise TypeError, "Expecting positive Integer" unless id.is_a?(Integer) && id > 0
 
-      # Convert data hash to use symbols, since it may be being set from json data.
-      options = Hash[options.map {|k, v| [k.to_sym, v.is_a?(String) ? v.to_sym : v]}]
+        config = Stampr.client.get ["configs", id]
+        self.new Hash[config.map {|k, v| [k.to_sym, v.is_a?(String) ? v.to_sym : v]}]       
+      end
+    end
 
-      @client = client
-      @size = options[:size] || :standard
-      @turnaround = options[:turnaround] || :threeday
-      @style = options[:style] || :color
-      @output = options[:output] || :single
-      @return_envelope = options[:returnenvelope] || options[:return_envelope] || false
+    # @option :size [:standard]
+    # @option :turnaround [:threeday]
+    # @option :style [:color]
+    # @option :output [:single]
+    # @option :return_envelope [false]
+    def initialize(options = {})
+      @size = options[:size] || DEFAULT_SIZE
+      @turnaround = options[:turnaround] || DEFAULT_TURNAROUND
+      @style = options[:style] || DEFAULT_STYLE
+      @output = options[:output] || DEFAULT_OUTPUT
+      # :returnenvelope is from json, return_envelope is more ruby-friendly for end-users.
+      @return_envelope = options[:returnenvelope] || options[:return_envelope] || DEFAULT_RETURN_ENVELOPE
       @id = options[:config_id] || nil
     end
 
@@ -35,12 +50,12 @@ module Stampr
     def create
       return if @id # Don't re-create if it already exists.
 
-      result = @client.post "configs",
-                            size: size,
-                            turnaround: turnaround, 
-                            style: style,
-                            output: output,
-                            returnenvelope: return_envelope
+      result = Stampr.client.post "configs",
+                                  size: size,
+                                  turnaround: turnaround, 
+                                  style: style,
+                                  output: output,
+                                  returnenvelope: return_envelope
 
       @id = result["config_id"]
 

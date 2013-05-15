@@ -37,11 +37,11 @@ Example of sending a letter via the simple API:
 ```ruby
 require 'stampr'
 
-client = Stampr::Client.new "username", "password"
+Stampr.authenticate "username", "password"
 
-client.send my_address, dest_address_1, body1
+Stampr.mail my_address, dest_address_1, body1
 
-client.send my_address, dest_address_2, body2
+Stampr.mail my_address, dest_address_2, body2
 ```
 
 More complex example:
@@ -49,10 +49,10 @@ More complex example:
 ```ruby
 require 'stampr'
 
-client = Stampr::Client.new "username", "password"
+Stampr.authenticate "username", "password"
 
 # Config can be shared by batches.
-config = Stampr::Config.new client: client
+config = Stampr::Config.new
 
 # Batches contain one or more mailings.
 Stampr::Batch.new config: config do
@@ -76,10 +76,10 @@ Complex example without using blocks:
 ```ruby
 require 'stampr'
 
-client = Stampr::Client.new "username", "password"
+Stampr.authenticate "username", "password"
 
 # Config can be shared by batches.
-config = Stampr::Config.new client: client
+config = Stampr::Config.new
 config.create
 
 # Batches contain one or more mailings.
@@ -90,13 +90,13 @@ mailing1 = Mailing.new batch: batch
 mailing1.to = dest_address_1
 mailing1.from = my_address
 mailing1.body = body1
-mailing1.send
+mailing1.mail
 
 mailing2 = Mailing.new batch: batch
 mailing2.to = dest_address_2
 mailing2.from = my_address
 mailing2.body = body2
-mailing2.send
+mailing2.mail
 
 ```
 

@@ -1,7 +1,8 @@
+require 'singleton'
+
 module Stampr
   class Client
     BASE_URI = "https://testing.dev.stam.pr/api"
-
 
     # @param username [String]
     # @param password [String]
@@ -15,7 +16,7 @@ module Stampr
     # @param body [String]
     #
     # @option :batch [Stampr::Batch]
-    def send(from, to, body, options={})
+    def mail(from, to, body, options={})
       raise TypeError, "from must be a non-empty String" unless from.is_a?(String) && !from.empty?
       raise TypeError, "to must be a non-empty String" unless to.is_a?(String) && !to.empty?
       raise TypeError, "body must be a String" unless body.is_a? String
@@ -46,31 +47,31 @@ module Stampr
     end
 
 
-    def get(path, params = {})
-      path = Array(path).join "/"
-      response = @client[path].get params, accept: :json
-      JSON.parse response.body
-    rescue RestClient::BadRequest => ex
-      raise RequestError, ex.message
-    rescue RestClient::Exception => ex
-      raise HTTPError, ex.message
+    def get(path)
+      api :get, path
     end
 
 
     def post(path, params = {})
-      path = Array(path).join "/"
-      response = @client[path].post params, accept: :json
-      JSON.parse response.body
-    rescue RestClient::BadRequest => ex
-      raise RequestError, ex.message
-    rescue RestClient::Exception => ex
-      raise HTTPError, ex.message
+      api :post, path, params
     end
 
 
-    def delete(path, params = {})
+    def delete(path)
+      api :delete, path
+    end
+
+
+    private
+    def api(action, path, params = nil)
       path = Array(path).join "/"
-      resonse = @client[path].delete params, accept: :json
+
+      response = if params
+         @client[path].public_send action, params, accept: :json
+      else
+        @client[path].public_send action, accept: :json
+      end
+
       JSON.parse response.body
     rescue RestClient::BadRequest => ex
       raise RequestError, ex.message
