@@ -8,5 +8,6 @@ require_relative "stampr/mailing"
 require_relative "stampr/version"
 
 module Stampr
-  class HTTPError < StandardException; end
+  class HTTPError < StandardError; end
+  class RequestError < StandardError; end
 end

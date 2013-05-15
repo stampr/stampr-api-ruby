@@ -19,3 +19,7 @@ end
 require 'webmock/rspec'
 
 require_relative '../lib/stampr'
+
+def json_data(name)
+  File.read File.expand_path("data/#{name}.json", File.dirname(__FILE__))
+end

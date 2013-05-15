@@ -46,28 +46,34 @@ module Stampr
     end
 
 
-    private
     def get(path, params = {})
-      response = @client[path].get params
+      path = Array(path).join "/"
+      response = @client[path].get params, accept: :json
       JSON.parse response.body
+    rescue RestClient::BadRequest => ex
+      raise RequestError, ex.message
     rescue RestClient::Exception => ex
       raise HTTPError, ex.message
     end
 
 
-    private
-    def post(path, body, params = {})
-      response = @client[path].post body, params
+    def post(path, params = {})
+      path = Array(path).join "/"
+      response = @client[path].post params, accept: :json
       JSON.parse response.body
+    rescue RestClient::BadRequest => ex
+      raise RequestError, ex.message
     rescue RestClient::Exception => ex
       raise HTTPError, ex.message
     end
 
 
-    private
     def delete(path, params = {})
-      resonse = @client[path].delete params
+      path = Array(path).join "/"
+      resonse = @client[path].delete params, accept: :json
       JSON.parse response.body
+    rescue RestClient::BadRequest => ex
+      raise RequestError, ex.message
     rescue RestClient::Exception => ex
       raise HTTPError, ex.message
     end
