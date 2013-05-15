@@ -63,14 +63,14 @@ describe Stampr::Config do
 
   describe "#create" do
     it "should post a creation request" do
-      stub = stub_request(:post, "https://user:pass@testing.dev.stam.pr/api/configs").
+      request = stub_request(:post, "https://user:pass@testing.dev.stam.pr/api/configs").
          with(body: {"output"=>"single", "returnenvelope"=>"false", "size"=>"standard", "style"=>"color", "turnaround"=>"threeday"},
               headers: {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'Content-Length'=>'80', 'Content-Type'=>'application/x-www-form-urlencoded', 'User-Agent'=>'Ruby'}).
          to_return(status: 200, body: json_data("config_create"), headers: {})
 
       subject.create
 
-      stub.should have_been_made
+      request.should have_been_made
 
       subject.id.should eq 4677
     end
@@ -79,7 +79,7 @@ describe Stampr::Config do
 
   describe ".[]" do
     it "should retreive a specific config" do
-      stub = stub_request(:get, "https://user:pass@testing.dev.stam.pr/api/configs/4677").
+      request = stub_request(:get, "https://user:pass@testing.dev.stam.pr/api/configs/4677").
          with(headers: {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'User-Agent'=>'Ruby'}).
          to_return(status: 200, body: json_data("config_index"), headers: {})
 
@@ -87,7 +87,27 @@ describe Stampr::Config do
 
       config.id.should eq 4677
 
-      stub.should have_been_made
+      request.should have_been_made
+    end
+  end
+
+  describe ".each" do
+    it "should yield each config" do
+      requests = [0, 1, 2].map do |i|
+        stub_request(:get, "https://user:pass@testing.dev.stam.pr/api/configs/all/#{i}").
+           with(headers: {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'User-Agent'=>'Ruby'}).
+           to_return(status: 200, body: json_data("configs_#{i}"), headers: {})
+      end
+
+      configs_ids = []
+
+      Stampr::Config.each do |config|
+        configs_ids << config.id
+      end
+
+      configs_ids.should eq [4677, 4678, 4679]
+
+      requests.each {|request| request.should have_been_made }
     end
   end
 end

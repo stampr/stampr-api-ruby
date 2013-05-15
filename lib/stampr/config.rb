@@ -19,11 +19,29 @@ module Stampr
 
         configs = Stampr.client.get ["configs", id]
         config = configs.first
-        self.new Hash[config.map {|k, v| [k.to_sym, v.is_a?(String) ? v.to_sym : v]}]       
+        self.new symbolize(config)       
+      end
+
+      def symbolize(hash)
+        Hash[hash.map {|k, v| [k.to_sym, v.is_a?(String) ? v.to_sym : v]}]
       end
 
       def each
-        return enum_for(:each) if block_given?
+        return enum_for(:each) unless block_given?
+
+        i = 0
+
+        loop do
+          configs = Stampr.client.get ["configs", "all", i]
+
+          break if configs.empty?
+
+          configs.each do |config|
+            yield self.new(symbolize(config))
+          end   
+
+          i += 1
+        end 
       end
     end
 
