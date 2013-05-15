@@ -32,7 +32,7 @@ describe Stampr::Config do
 
 
   describe "#initialize from data" do
-    let(:data) { Hash[JSON.parse(json_data("config")).map {|k, v| [k.to_sym, v.is_a?(String) ? v.to_sym : v]}] }
+    let(:data) { Hash[JSON.parse(json_data("config_create")).map {|k, v| [k.to_sym, v.is_a?(String) ? v.to_sym : v]}] }
     let(:subject) { described_class.new data }
 
     it "should do have a size" do
@@ -66,7 +66,7 @@ describe Stampr::Config do
       stub = stub_request(:post, "https://user:pass@testing.dev.stam.pr/api/configs").
          with(body: {"output"=>"single", "returnenvelope"=>"false", "size"=>"standard", "style"=>"color", "turnaround"=>"threeday"},
               headers: {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'Content-Length'=>'80', 'Content-Type'=>'application/x-www-form-urlencoded', 'User-Agent'=>'Ruby'}).
-         to_return(status: 200, body: json_data("config"), headers: {})
+         to_return(status: 200, body: json_data("config_create"), headers: {})
 
       subject.create
 
@@ -81,7 +81,7 @@ describe Stampr::Config do
     it "should retreive a specific config" do
       stub = stub_request(:get, "https://user:pass@testing.dev.stam.pr/api/configs/4677").
          with(headers: {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'User-Agent'=>'Ruby'}).
-         to_return(status: 200, body: json_data("config"), headers: {})
+         to_return(status: 200, body: json_data("config_index"), headers: {})
 
       config = Stampr::Config[4677]
 

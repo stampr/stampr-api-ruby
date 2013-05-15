@@ -17,8 +17,13 @@ module Stampr
       def [](id)
         raise TypeError, "Expecting positive Integer" unless id.is_a?(Integer) && id > 0
 
-        config = Stampr.client.get ["configs", id]
+        configs = Stampr.client.get ["configs", id]
+        config = configs.first
         self.new Hash[config.map {|k, v| [k.to_sym, v.is_a?(String) ? v.to_sym : v]}]       
+      end
+
+      def each
+        return enum_for(:each) if block_given?
       end
     end
 
