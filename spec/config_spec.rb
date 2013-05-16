@@ -9,54 +9,56 @@ describe Stampr::Config do
 
 
   describe "#initialize" do
-    it "should do have a size" do
-      subject.size.should eq :standard
+    context "defaulted" do
+      it "should do have a size" do
+        subject.size.should eq :standard
+      end
+
+      it "should have a turnaround" do
+        subject.turnaround.should eq :threeday
+      end
+
+      it "should have a style" do
+        subject.style.should eq :color
+      end
+
+      it "should have an output" do
+        subject.output.should eq :single
+      end
+
+      it "should have a return_envelope" do
+        subject.return_envelope.should be_false
+      end
     end
 
-    it "should have a turnaround" do
-      subject.turnaround.should eq :threeday
-    end
 
-    it "should have a style" do
-      subject.style.should eq :color
-    end
+    context "from data" do
+      let(:data) { Hash[JSON.parse(json_data("config_create")).map {|k, v| [k.to_sym, v]}] }
+      let(:subject) { described_class.new data }
 
-    it "should have an output" do
-      subject.output.should eq :single
-    end
+      it "should do have a size" do
+        subject.size.should eq :standard
+      end
 
-    it "should have a return_envelope" do
-      subject.return_envelope.should be_false
-    end
-  end
+      it "should have a turnaround" do
+        subject.turnaround.should eq :threeday
+      end
 
+      it "should have a style" do
+        subject.style.should eq :color
+      end
 
-  describe "#initialize from data" do
-    let(:data) { Hash[JSON.parse(json_data("config_create")).map {|k, v| [k.to_sym, v]}] }
-    let(:subject) { described_class.new data }
+      it "should have an output" do
+        subject.output.should eq :single
+      end
 
-    it "should do have a size" do
-      subject.size.should eq :standard
-    end
+      it "should have a return_envelope" do
+        subject.return_envelope.should be_false
+      end
 
-    it "should have a turnaround" do
-      subject.turnaround.should eq :threeday
-    end
-
-    it "should have a style" do
-      subject.style.should eq :color
-    end
-
-    it "should have an output" do
-      subject.output.should eq :single
-    end
-
-    it "should have a return_envelope" do
-      subject.return_envelope.should be_false
-    end
-
-    it "should have an id" do
-      subject.id.should eq 4677
+      it "should have an id" do
+        subject.id.should eq 4677
+      end
     end
   end
 
@@ -90,6 +92,7 @@ describe Stampr::Config do
       request.should have_been_made
     end
   end
+
 
   describe ".each" do
     it "should yield each config" do

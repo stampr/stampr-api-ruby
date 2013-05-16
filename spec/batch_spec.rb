@@ -5,42 +5,82 @@ describe Stampr::Batch do
     Stampr.authenticate "user", "pass"
   end
 
+  let(:batch_create) { Hash[JSON.parse(json_data("batch_create")).map {|k, v| [k.to_sym, v]}] }
+
 
   describe "#initialize" do
-    let(:subject) { described_class.new config_id: 1 }
+    context "defaulted" do
+      let(:subject) { described_class.new config_id: 1 }
 
-    it "should do have a size" do
-      subject.config_id.should eq 1
+      it "should do have a size" do
+        subject.config_id.should eq 1
+      end
+
+      it "should not have a template" do
+        subject.template.should be_nil
+      end
+
+      it "should have a default status" do
+        subject.status.should eq :processing
+      end
     end
 
-    it "should not have a template" do
-      subject.template.should be_nil
-    end
 
-    it "should have a default status" do
-      subject.status.should eq :processing
+    context "from data" do
+      let(:subject) { described_class.new batch_create }
+
+      it "should do have a size" do
+        subject.config_id.should eq 1
+      end
+
+      it "should have a template" do
+        subject.template.should eq "bleh"
+      end
+
+      it "should have a status" do
+        subject.status.should eq :processing
+      end
+
+      it "should have an id" do
+        subject.id.should eq 2
+      end
     end
   end
 
 
-  describe "#initialize from data" do
-    let(:data) { Hash[JSON.parse(json_data("batch_create")).map {|k, v| [k.to_sym, v]}] }
-    let(:subject) { described_class.new data }
+  describe "#template=" do
+    let(:subject) { described_class.new config_id: 1 }
 
-    it "should do have a size" do
-      subject.config_id.should eq 1
+    it "should accept a string" do
+      subject.template = "fish"
+      subject.template.should eq "fish"
     end
 
-    it "should have a template" do
-      subject.template.should eq "bleh"
+    it "should accept nil" do
+      subject.template = nil
+      subject.template.should be_nil
     end
 
-    it "should have a status" do
-      subject.status.should eq :processing
+    it "should refuse other data" do
+      -> { subject.template = 14 }.should raise_error(TypeError, "template must be a String")
+    end
+  end
+
+
+  describe "#status=" do
+    let(:subject) { described_class.new config_id: 1 }
+
+    it "should accept a string" do
+      subject.status = :archive
+      subject.status.should eq :archive
     end
 
-    it "should have an id" do
-      subject.id.should eq 2
+    it "should refuse incorrect symbols" do
+      -> { subject.status = :frog }.should raise_error(ArgumentError, "status must be one of: :processing, :hold, :archive")
+    end
+
+    it "should refuse other data" do
+      -> { subject.status = 14 }.should raise_error(TypeError, "status must be a Symbol")
     end
   end
 
@@ -74,6 +114,7 @@ describe Stampr::Batch do
       request.should have_been_made
     end
   end
+
 
   describe "#delete" do
     it "should delete the batch" do
