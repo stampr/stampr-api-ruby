@@ -52,20 +52,23 @@ module Stampr
     # @return [Float] Number of seconds to/from server.
     def ping
       sent = Time.now
-      get %"test/ping"
+      get "test/ping"
        
       (Time.now - sent).fdiv 2
     end
+
 
     # Send a HTTP GET request.
     def get(path)
       api :get, path
     end
 
+
     # Send a HTTP POST request.
     def post(path, params = {})
       api :post, path, params
     end
+
 
     # Send a HTTP DELETE request.
     def delete(path)
