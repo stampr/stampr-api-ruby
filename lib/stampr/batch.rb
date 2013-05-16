@@ -23,16 +23,19 @@ module Stampr
     # @option :template [String]
     # @option :status [:processing or :hold]
     def initialize(options={})
-      @config_id = if options[:config_id] and not options[:config]
+      raise ArgumentError, "Must supply :config_id OR :config options" if options.key?(:config_id) && options.key?(:config)
+
+      @config_id = if options.key? :config_id
         raise TypeError, ":config_id option must be an Integer" unless options[:config_id].is_a? Integer
         options[:config_id]
 
-      elsif options[:config]
+      elsif options.key? :config
         raise TypeError, ":config option must be an Stampr::Config" unless options[:config].is_a? Stampr::Config
         options[:config].id
 
       else
-        raise ArgumentError, "Must supply :config_id OR :config options"
+        @config = Config.new
+        @config.id
       end
 
       @id = options[:batch_id] || nil

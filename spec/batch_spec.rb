@@ -1,5 +1,6 @@
 require_relative "spec_helper"
 
+
 describe Stampr::Batch do
   before :each do
     Stampr.authenticate "user", "pass"
@@ -7,8 +8,17 @@ describe Stampr::Batch do
 
   let(:batch_create) { Hash[JSON.parse(json_data("batch_create")).map {|k, v| [k.to_sym, v]}] }
 
-
   describe "#initialize" do
+    it "should generate a Config if it isn't included" do
+      Stampr::Config.should_receive(:new).with().and_return(mock(id: 7))
+      subject = described_class.new
+      subject.config_id.should eq 7
+    end
+
+    it "should fail with config & batch_id" do
+      ->{ described_class.new config_id: 2, config: mock }.should raise_error(ArgumentError, "Must supply :config_id OR :config options")
+    end
+
     context "defaulted" do
       let(:subject) { described_class.new config_id: 1 }
 

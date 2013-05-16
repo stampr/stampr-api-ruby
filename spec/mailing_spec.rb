@@ -9,9 +9,18 @@ describe Stampr::Mailing do
 
 
   describe "#initialize" do
+    it "should generate a Batch if it isn't included" do
+      Stampr::Batch.should_receive(:new).with().and_return(mock(id: 7))
+      subject = described_class.new
+      subject.batch_id.should eq 7
+    end
+
+    it "should fail with batch & batch_id" do
+      ->{ described_class.new batch_id: 2, batch: mock }.should raise_error(ArgumentError, "Must supply :batch_id OR :batch options")
+    end
+
     it "should fail with bad data" do
-      ->{ described_class.new batch_id: 2, address: "bleh1", returnaddress: "bleh2", data: 12 }.
-          should raise_error(TypeError, "Bad format for data")
+      ->{ described_class.new batch_id: 2, data: 12 }.should raise_error(TypeError, "Bad format for data")
     end
   end
 
@@ -73,6 +82,20 @@ describe Stampr::Mailing do
       subject.id.should eq 1
 
       request.should have_been_made
+    end
+
+    it "should fail without an address" do
+      data = "%PDF1.4..."
+      subject = described_class.new batch_id: 2, returnaddress: "bleh"
+
+      -> { subject.mail }.should raise_error Stampr::APIError, "address required before mailing"
+    end
+
+    it "should fail without a return address" do
+      data = "%PDF1.4..."
+      subject = described_class.new batch_id: 2, address: "bleh"
+
+      -> { subject.mail }.should raise_error Stampr::APIError, "return_address required before mailing"
     end
   end
 

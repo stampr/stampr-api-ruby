@@ -22,16 +22,20 @@ module Stampr
     # @option :return_address [String]
     # @option :data [String, Hash] Hash for mail merge, String for HTML or PDF format.
     def initialize(options = {})
-      @batch_id = if options[:batch_id] and not options[:batch]
+      raise ArgumentError, "Must supply :batch_id OR :batch options" if options.key?(:batch_id) && options.key?(:batch)
+
+      @batch_id = if options.key? :batch_id
         raise TypeError, ":batch_id option must be an Integer" unless options[:batch_id].is_a? Integer
         options[:batch_id]
 
-      elsif options[:batch]
+      elsif options.key? :batch
         raise TypeError, ":batch option must be an Stampr::Batch" unless options[:batch].is_a? Stampr::Batch
         options[:batch].id
 
       else
-        raise ArgumentError, "Must supply :batch_id OR :batch options"
+        # Create a batch just for this mailing (not accessible outside this object).
+        @batch = Batch.new
+        @batch.id        
       end
 
       self.address = options[:address] || nil
@@ -94,6 +98,9 @@ module Stampr
 
     def mail
       return if @id # Don't re-create if it already exists.
+
+      raise APIError, "address required before mailing" unless address
+      raise APIError, "return_address required before mailing" unless return_address
 
       params = {
           batch_id: batch_id,
