@@ -46,6 +46,31 @@ Stampr.mail my_address, dest_address_1, body1
 Stampr.mail my_address, dest_address_2, body2
 ```
 
+Using mail-merge with [Mustache template](http://mustache.github.io/):
+
+```ruby
+require 'stampr'
+
+Stampr.authenticate "username", "password"
+
+Stampr::Batch.new do
+  template "<html>Hello {{name}}!</html>"
+
+  mailing do
+    address dest_address_1
+    return_address my_address
+    data name: "Marie"
+  end
+
+  mailing do
+    address dest_address_2
+    return_address my_address
+    data name: "Romy"
+  end
+end
+
+```
+
 More complex example:
 
 ```ruby
@@ -59,15 +84,15 @@ config = Stampr::Config.new
 # Batches contain one or more mailings.
 Stampr::Batch.new config: config do
   mailing do
-    to dest_address_1
-    from my_address
-    body body1
+    address dest_address_1
+    return_address my_address
+    data body1
   end
 
   mailing do
-    to dest_address_2
-    from my_address
-    body body2
+    address dest_address_2
+    return_address my_address
+    data body2
   end
 end
 
@@ -89,15 +114,15 @@ batch = Stampr::Batch.new config: config
 batch.create
 
 mailing1 = Mailing.new batch: batch
-mailing1.to = dest_address_1
-mailing1.from = my_address
-mailing1.body = body1
+mailing1.address = dest_address_1
+mailing1.return_address = my_address
+mailing1.data = data1
 mailing1.mail
 
 mailing2 = Mailing.new batch: batch
-mailing2.to = dest_address_2
-mailing2.from = my_address
-mailing2.body = body2
+mailing2.address = dest_address_2
+mailing2.return_address = my_address
+mailing2.data = data2
 mailing2.mail
 
 ```
