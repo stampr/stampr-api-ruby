@@ -3,7 +3,7 @@ module Stampr
     STATUSES = [:processing, :hold, :archive]
     DEFAULT_STATUS = :processing
 
-    attr_reader :id, :config_id, :template, :status
+    attr_reader :config_id, :template, :status
 
     class << self
       # Get the batch with the specific ID.

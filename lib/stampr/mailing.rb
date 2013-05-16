@@ -3,7 +3,7 @@ module Stampr
     FORMATS = [:json, :html, :pdf, :none]
     DEFAULT_FORMAT = :none
 
-    attr_accessor :address, :return_address, :format, :data, :batch_id, :id
+    attr_accessor :address, :return_address, :format, :data, :batch_id
 
     class << self
       # Get the batch with the specific ID.
@@ -66,6 +66,12 @@ module Stampr
     end
 
 
+    def id
+      mail unless @id
+      @id
+    end
+
+
     def mail
       return if @id # Don't re-create if it already exists.
 
@@ -97,6 +103,7 @@ module Stampr
 
       self
     end
+
 
     # @return true on successful deletion.
     def delete
