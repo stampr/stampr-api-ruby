@@ -1,7 +1,6 @@
 module Stampr
   class Mailing
     FORMATS = [:json, :html, :pdf, :none]
-    DEFAULT_FORMAT = :none
 
     attr_accessor :address, :return_address, :format, :data, :batch_id
 
@@ -18,6 +17,10 @@ module Stampr
     end
 
 
+    # @option :batch [Stampr::Batch]
+    # @option :address [String]
+    # @option :return_address [String]
+    # @option :data [String, Hash] Hash for mail merge, String for HTML or PDF format.
     def initialize(options = {})
       @batch_id = if options[:batch_id] and not options[:batch]
         raise TypeError, ":batch_id option must be an Integer" unless options[:batch_id].is_a? Integer
@@ -33,7 +36,6 @@ module Stampr
 
       self.address = options[:address] || nil
       self.return_address = options[:return_address] || options[:returnaddress] || nil
-      self.format = (options[:format] || DEFAULT_FORMAT).to_sym
       self.data = options[:data] || nil
       @id = options[:mailing_id] || nil
     end
@@ -53,22 +55,40 @@ module Stampr
     end
 
 
-    def format=(value)
-      raise TypeError, "format must be a Symbol" unless value.is_a? Symbol
-      raise ArgumentError, "format must be one of: #{FORMATS.map(&:inspect).join(", ")}" unless FORMATS.include? value
-
-      @format = value
-    end
-
-
     def data=(value)
-      @data = value
+      old_data, @data = @data, value
+      begin
+        format # Just read format to check that the format is good.
+      rescue TypeError => ex
+        @data = old_data
+        raise ex
+      end
+      @data
     end
 
 
     def id
       mail unless @id
       @id
+    end
+
+
+    def format
+      case data
+      when Hash
+        :json
+      when String
+        # Check if the string has a PDF header.
+        if data =~ /\A%PDF/
+          :pdf
+        else
+          :html
+        end
+      when NilClass
+        :none
+      else
+        raise TypeError, "Bad format for data"
+      end
     end
 
 
@@ -84,17 +104,11 @@ module Stampr
 
       case format
       when :json
-        raise APIError, "data expected as Hash for conversion to json" unless data.is_a? Hash
         params[:data] = data.to_json
       when :html
-        raise APIError, "data expected as String containing HTML" unless data.is_a? String
-        params[:data] = data
+         params[:data] = data
       when :pdf
-        raise APIError, "data expected as binary String containing PDF data" unless data.is_a? String
-        raise NotImplementedError, "Not sure what encoding to give PDF data."
         params[:data] = data # TODO: encode this? Base64?
-      when :none
-        raise APIError, "data provided, but format is :none" unless data.nil?
       end
 
       result = Stampr.client.post "mailings", params

@@ -13,11 +13,10 @@ module Stampr
 
     # @param from [String] Return address.
     # @param to [String] Address of recipient.
-    # @param body [String] Either HTML or PDF string (If PDF, must use option `format: :pdf`).
+    # @param body [String] Either HTML or PDF string.
     #
     # @option :batch [Stampr::Batch]
     # @option :config [Stampr::Config]
-    # @option :format [:html, :pdf] Format of message (:html)
     def mail(from, to, body, options={})
       raise TypeError, "from must be a non-empty String" unless from.is_a?(String) && !from.empty?
       raise TypeError, "to must be a non-empty String" unless to.is_a?(String) && !to.empty?
@@ -30,7 +29,6 @@ module Stampr
         m.address = to
         m.return_address = from
         m.data = body
-        m.format = options[:format] || :html
       end
     end
 

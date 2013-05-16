@@ -8,9 +8,16 @@ describe Stampr::Mailing do
   let(:mailing_create) { Hash[JSON.parse(json_data("mailing_create")).map {|k, v| [k.to_sym, v]}] }
 
 
+  describe "#initialize" do
+    it "should fail with bad data" do
+      ->{ described_class.new batch_id: 2, address: "bleh1", returnaddress: "bleh2", data: 12 }.
+          should raise_error(TypeError, "Bad format for data")
+    end
+  end
+
   describe "#mail" do
     it "should post a mailing request without data" do
-      subject = described_class.new batch_id: 2, address: "bleh1", returnaddress: "bleh2", format: :none
+      subject = described_class.new batch_id: 2, address: "bleh1", returnaddress: "bleh2"
 
       request = stub_request(:post, "https://user:pass@testing.dev.stam.pr/api/mailings").
          with(body: {"batch_id"=>"2", "address" => "bleh1", "returnaddress" => "bleh2", "format"=>"none"},
@@ -25,7 +32,7 @@ describe Stampr::Mailing do
 
     it "should post a mailing request with json data" do
       data = {"fred" => "savage"}
-      subject = described_class.new batch_id: 2, address: "bleh1", returnaddress: "bleh2", format: :json, data: data
+      subject = described_class.new batch_id: 2, address: "bleh1", returnaddress: "bleh2", data: data
 
       request = stub_request(:post, "https://user:pass@testing.dev.stam.pr/api/mailings").
          with(body: {"batch_id"=>"2", "address" => "bleh1", "returnaddress" => "bleh2", "format" => "json", "data" => data.to_json},
@@ -38,15 +45,9 @@ describe Stampr::Mailing do
       request.should have_been_made
     end
 
-    it "should fail with bad json data" do
-      subject = described_class.new batch_id: 2, address: "bleh1", returnaddress: "bleh2", format: :json, data: "hello"
-      -> { subject.mail }.should raise_error Stampr::APIError, "data expected as Hash for conversion to json"
-    end
-
-
     it "should post a mailing request with html data" do
       data = "<html>Hello world!</html>"
-      subject = described_class.new batch_id: 2, address: "bleh1", returnaddress: "bleh2", format: :html, data: data
+      subject = described_class.new batch_id: 2, address: "bleh1", returnaddress: "bleh2", data: data
 
       request = stub_request(:post, "https://user:pass@testing.dev.stam.pr/api/mailings").
          with(body: {"batch_id"=>"2", "address" => "bleh1", "returnaddress" => "bleh2", "format" => "html", "data" => data},
@@ -59,18 +60,19 @@ describe Stampr::Mailing do
       request.should have_been_made
     end
 
-    it "should fail with bad html data" do
-      subject = described_class.new batch_id: 2, address: "bleh1", returnaddress: "bleh2", format: :html, data: {}
-      -> { subject.mail }.should raise_error Stampr::APIError, "data expected as String containing HTML"
-    end
-
     it "should post a mailing with pdf data" do
-      pending
-    end
+      data = "%PDF1.4..."
+      subject = described_class.new batch_id: 2, address: "bleh1", returnaddress: "bleh2", data: data
 
-    it "should fail with bad pdf data" do
-      subject = described_class.new batch_id: 2, address: "bleh1", returnaddress: "bleh2", format: :pdf, data: {}
-      -> { subject.mail }.should raise_error Stampr::APIError, "data expected as binary String containing PDF data"
+      request = stub_request(:post, "https://user:pass@testing.dev.stam.pr/api/mailings").
+         with(body: {"batch_id"=>"2", "address" => "bleh1", "returnaddress" => "bleh2", "format" => "pdf", "data" => data},
+              headers: {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'Content-Length'=>'73', 'Content-Type'=>'application/x-www-form-urlencoded', 'User-Agent'=>'Ruby'}).
+         to_return(status: 200, body: json_data("mailing_create"), headers: {})
+
+      subject.mail
+      subject.id.should eq 1
+
+      request.should have_been_made
     end
   end
 
