@@ -1,13 +1,13 @@
 module Stampr
+  # An individual piece of mail, within a Stampr::Batch
   class Mailing
     extend Utilities
-
-    FORMATS = [:json, :html, :pdf, :none]
 
     attr_accessor :address, :return_address, :format, :data, :batch_id
 
     class << self
-      # Get the batch with the specific ID.
+      # Get the mailing with the specific ID.
+      #
       # @return [Stampr::Mailing]
       def [](id)
         raise TypeError, "id should be a positive Integer" unless id.is_a?(Integer) && id > 0
@@ -19,10 +19,11 @@ module Stampr
     end
 
 
-    # @option :batch [Stampr::Batch]
-    # @option :address [String]
-    # @option :return_address [String]
-    # @option :data [String, Hash] Hash for mail merge, String for HTML or PDF format.
+    # @option options :batch [Stampr::Batch]
+    # @option options :batch_id [Integer]
+    # @option options :address [String]
+    # @option options :return_address [String]
+    # @option options :data [String, Hash] Hash for mail merge, String for HTML or PDF format.
     def initialize(options = {})
       raise ArgumentError, "Must supply :batch_id OR :batch options" if options.key?(:batch_id) && options.key?(:batch)
 
@@ -47,6 +48,7 @@ module Stampr
     end
 
 
+    # Set the address to send mail to.
     def address=(value)
       raise TypeError, "address must be a String" unless value.nil? or value.is_a? String
 
@@ -54,6 +56,7 @@ module Stampr
     end
 
 
+    # Set the return address for the mail.
     def return_address=(value)
       raise TypeError, "return_address must be a String" unless value.nil? or value.is_a? String
 
@@ -61,6 +64,7 @@ module Stampr
     end
 
 
+    # Set the data (HTML string, mail-merge Hash, PDF data or nil)
     def data=(value)
       old_data, @data = @data, value
       begin
@@ -72,13 +76,18 @@ module Stampr
       @data
     end
 
-
+    # Get the id of the mailing. Calling this will mail the mailing first, if required.
+    #
+    # @return [Integer]
     def id
       mail unless @id
       @id
     end
 
 
+    # The format of the mailing data.
+    #
+    # @return [:json, :pdf, :html, :none]
     def format
       case data
       when Hash
@@ -98,6 +107,7 @@ module Stampr
     end
 
 
+    # Mail the mailing on the server.
     def mail
       return if @id # Don't re-create if it already exists.
 
@@ -128,6 +138,8 @@ module Stampr
     end
 
 
+    # Delete the mailing on the server.
+    #
     # @return true on successful deletion.
     def delete
       raise APIError, "Can't #delete before #create" unless @id

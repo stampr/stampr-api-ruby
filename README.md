@@ -1,9 +1,11 @@
 Stampr
 ======
 
-TODO: Write a gem description
+Wrapper for the Stampr API.
 
 Author: Bil Bas (bil.bas.dev@gmail.com)
+
+Site: https://github.com/stampr/stampr-ruby-api
 
 License: MIT
 

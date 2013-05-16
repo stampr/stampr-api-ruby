@@ -14,7 +14,8 @@ module Stampr
     attr_reader :size, :turnaround, :style, :output, :return_envelope
 
     class << self
-      # Get the config
+      # Get the config with a specific id.
+      #
       # @return [Stampr::Config]
       def [](id)
         raise TypeError, "Expecting positive Integer" unless id.is_a?(Integer) && id > 0
@@ -24,6 +25,9 @@ module Stampr
         self.new symbolize_hash_keys(config)       
       end
 
+      # Iterate through all configs defined in your Stampr account.
+      #
+      # @yield [Stampr::Config]
       def each
         return enum_for(:each) unless block_given?
 
@@ -43,11 +47,11 @@ module Stampr
       end
     end
 
-    # @option :size [:standard]
-    # @option :turnaround [:threeday]
-    # @option :style [:color]
-    # @option :output [:single]
-    # @option :return_envelope [false]
+    # @option options :size [:standard]
+    # @option options :turnaround [:threeday]
+    # @option options :style [:color]
+    # @option options :output [:single]
+    # @option options :return_envelope [false]
     def initialize(options = {})
       @size = (options[:size] || DEFAULT_SIZE).to_sym
       @turnaround = (options[:turnaround] || DEFAULT_TURNAROUND).to_sym
@@ -59,6 +63,9 @@ module Stampr
     end
 
 
+    # Get the id of the configuration. Calling this will create the config first, if required.
+    #
+    # @return [Integer]
     def id
       create unless @id
       @id

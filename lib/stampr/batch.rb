@@ -1,4 +1,5 @@
 module Stampr
+  # A batch of Stampr::Mailing
   class Batch
     extend Utilities
 
@@ -9,6 +10,7 @@ module Stampr
 
     class << self
       # Get the batch with the specific ID.
+      #
       # @return [Stampr::Batch]
       def [](id)
         raise TypeError, "id should be a positive Integer" unless id.is_a?(Integer) && id > 0
@@ -20,10 +22,12 @@ module Stampr
     end
 
 
-    # @option :config_id [Integer]
-    # @option :config [Stampr::Config]
-    # @option :template [String]
-    # @option :status [:processing or :hold]
+    # If neither :config_id or :config options are provided, then a new, default, config will be applied to this batch.
+    #
+    # @option options :config_id [Integer] ID of the config to use.
+    # @option options :config [Stampr::Config] Config to use.
+    # @option options :template [String]
+    # @option options :status [:processing, :hold] The initial status of the mailing (:processing)
     def initialize(options={})
       raise ArgumentError, "Must supply :config_id OR :config options" if options.key?(:config_id) && options.key?(:config)
 
@@ -53,6 +57,12 @@ module Stampr
     end
 
 
+    # One of:
+    # * :processing
+    # * :hold
+    # * :archive
+    #
+    # @return [:processing, :hold, :archive]
     def status=(value)
       raise TypeError, "status must be a Symbol" unless value.is_a? Symbol
       raise ArgumentError, "status must be one of: #{STATUSES.map(&:inspect).join(", ")}" unless STATUSES.include? value
@@ -60,7 +70,9 @@ module Stampr
       @status = value
     end
 
-
+    # Get the id of the batch. Calling this will create the batch first, if required.
+    #
+    # @return [Integer]
     def id
       create unless @id
       @id
@@ -87,6 +99,8 @@ module Stampr
     end
 
 
+    # Delete the config on the server (this will fail if there are mailings still inside the batch).
+    #
     # @return true on successful deletion.
     def delete
       raise APIError, "Can't #delete before #create" unless @id

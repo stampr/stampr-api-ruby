@@ -1,4 +1,5 @@
 module Stampr
+  # General utility methods to be used inside the gem.
   module Utilities
     # Symbolize all the keys in a hash.
     #
