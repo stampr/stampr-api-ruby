@@ -42,14 +42,14 @@ module Stampr
 
 
     def address=(value)
-      raise TypeError, "template must be a String" unless value.nil? or value.is_a? String
+      raise TypeError, "address must be a String" unless value.nil? or value.is_a? String
 
       @address = value
     end
 
 
     def return_address=(value)
-      raise TypeError, "template must be a String" unless value.nil? or value.is_a? String
+      raise TypeError, "return_address must be a String" unless value.nil? or value.is_a? String
 
       @return_address = value
     end
