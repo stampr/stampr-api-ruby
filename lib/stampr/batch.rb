@@ -7,7 +7,7 @@ module Stampr
 
     class << self
       # Get the batch with the specific ID.
-      # @return [Stampr::Config]
+      # @return [Stampr::Batch]
       def [](id)
         raise TypeError, "id should be a positive Integer" unless id.is_a?(Integer) && id > 0
 
