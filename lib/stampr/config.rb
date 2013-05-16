@@ -3,6 +3,8 @@ module Stampr
   #
   # TODO: Allow attributes to be set.
   class Config
+    extend Utilities
+
     DEFAULT_SIZE = :standard
     DEFAULT_TURNAROUND = :threeday
     DEFAULT_STYLE = :color
@@ -19,7 +21,7 @@ module Stampr
 
         configs = Stampr.client.get ["configs", id]
         config = configs.first
-        self.new Stampr.symbolize_hash_keys(config)       
+        self.new symbolize_hash_keys(config)       
       end
 
       def each
@@ -33,7 +35,7 @@ module Stampr
           break if configs.empty?
 
           configs.each do |config|
-            yield self.new(Stampr.symbolize_hash_keys(config))
+            yield self.new(symbolize_hash_keys(config))
           end   
 
           i += 1

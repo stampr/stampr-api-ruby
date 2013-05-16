@@ -1,5 +1,7 @@
 module Stampr
   class Mailing
+    extend Utilities
+
     FORMATS = [:json, :html, :pdf, :none]
 
     attr_accessor :address, :return_address, :format, :data, :batch_id
@@ -12,7 +14,7 @@ module Stampr
 
         mailings = Stampr.client.get ["mailings", id]
         mailing = mailings.first
-        self.new Stampr.symbolize_hash_keys(mailing)       
+        self.new symbolize_hash_keys(mailing)       
       end
     end
 

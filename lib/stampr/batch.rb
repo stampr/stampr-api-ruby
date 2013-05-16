@@ -1,5 +1,7 @@
 module Stampr
   class Batch
+    extend Utilities
+
     STATUSES = [:processing, :hold, :archive]
     DEFAULT_STATUS = :processing
 
@@ -13,7 +15,7 @@ module Stampr
 
         batches = Stampr.client.get ["batches", id]
         batch = batches.first
-        self.new Stampr.symbolize_hash_keys(batch)       
+        self.new symbolize_hash_keys(batch)       
       end
     end
 
