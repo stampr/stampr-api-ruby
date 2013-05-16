@@ -5,7 +5,7 @@ Wrapper for the Stampr API.
 
 Author: Bil Bas (bil.bas.dev@gmail.com)
 
-Site: https://github.com/stampr/stampr-ruby-api
+Site: https://github.com/stampr/stampr-api-ruby
 
 License: MIT
 
