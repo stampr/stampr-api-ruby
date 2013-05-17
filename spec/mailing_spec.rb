@@ -22,6 +22,16 @@ describe Stampr::Mailing do
     it "should fail with bad data" do
       ->{ described_class.new batch_id: 2, data: 12 }.should raise_error(TypeError, "Bad format for data")
     end
+
+    it "should yield itself then mail itself if block is given" do
+      yielded = nil
+      mailing = described_class.new batch_id: 1 do |m|
+        m.should_receive(:mail).with()
+        yielded = m
+      end
+      yielded.should be_a Stampr::Mailing
+      yielded.should eq mailing
+    end
   end
 
   describe "#mail" do

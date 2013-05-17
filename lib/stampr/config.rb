@@ -60,6 +60,8 @@ module Stampr
       # :returnenvelope is from json, return_envelope is more ruby-friendly for end-users.
       @return_envelope = options[:returnenvelope] || options[:return_envelope] || DEFAULT_RETURN_ENVELOPE
       @id = options[:config_id] || nil
+
+      yield self if block_given?
     end
 
 

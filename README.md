@@ -53,19 +53,19 @@ require 'stampr'
 
 Stampr.authenticate "username", "password"
 
-Stampr::Batch.new do
-  template "<html>Hello {{name}}!</html>"
+Stampr::Batch.new do |b|
+  b.template = "<html>Hello {{name}}!</html>"
 
-  mailing do
-    address dest_address_1
-    return_address my_address
-    data name: "Marie"
+  b.mail do |m|
+    m.address = dest_address_1
+    m.return_address = my_address
+    m.data = { name: "Marie" }
   end
 
-  mailing do
-    address dest_address_2
-    return_address my_address
-    data name: "Romy"
+  b.mail do |m|
+    m.address = dest_address_2
+    m.return_address = my_address
+    m.data = { name: "Romy" }
   end
 end
 
@@ -82,17 +82,17 @@ Stampr.authenticate "username", "password"
 config = Stampr::Config.new
 
 # Batches contain one or more mailings.
-Stampr::Batch.new config: config do
-  mailing do
-    address dest_address_1
-    return_address my_address
-    data body1
+Stampr::Batch.new config: config do |b|
+  b.mailing do |m|
+    m.address = dest_address_1
+    m.return_address = my_address
+    m.data = body1
   end
 
-  mailing do
-    address dest_address_2
-    return_address my_address
-    data body2
+  b.mailing do |m|
+    m.address = dest_address_2
+    m.return_address = my_address
+    m.data = body2
   end
 end
 

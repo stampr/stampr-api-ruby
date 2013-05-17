@@ -19,6 +19,15 @@ describe Stampr::Batch do
       ->{ described_class.new config_id: 2, config: mock }.should raise_error(ArgumentError, "Must supply :config_id OR :config options")
     end
 
+    it "should yield itself if block is given" do
+      yielded = nil
+      batch = described_class.new config_id: 1 do |b|
+        yielded = b
+      end
+
+      yielded.should eq batch
+    end
+
     context "defaulted" do
       let(:subject) { described_class.new config_id: 1 }
 
@@ -158,6 +167,36 @@ describe Stampr::Batch do
       batch.id.should eq 2
 
       request.should have_been_made
+    end
+  end
+
+
+  describe "#mailing" do
+    it "should yield a new mailing and mail it" do
+      Stampr::Config.should_receive(:new).with().once.and_return(mock(id: 7))
+
+      yielded = nil
+      batch = Stampr::Batch.new batch_id: 6, template: "frog"
+
+      mailing = batch.mailing do |m|
+        m.should_receive(:mail).with()
+        yielded = m
+      end
+
+      yielded.should eq mailing
+      yielded.should be_a Stampr::Mailing
+      yielded.batch_id.should eq 6
+    end
+
+    it "should be happy without a block" do
+      Stampr::Config.should_receive(:new).with().once.and_return(mock(id: 7))
+
+      batch = Stampr::Batch.new batch_id: 6, template: "frog"
+
+      mail = batch.mailing
+
+      mail.should be_a Stampr::Mailing
+      mail.batch_id.should eq 6
     end
   end
 end

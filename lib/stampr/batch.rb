@@ -47,6 +47,8 @@ module Stampr
       @id = options[:batch_id] || nil
       self.template = options[:template]
       self.status = (options[:status] || DEFAULT_STATUS).to_sym
+
+      yield self if block_given?
     end
 
 
@@ -110,6 +112,14 @@ module Stampr
       Stampr.client.delete ["batches", id]
 
       true
+    end
+
+
+    # Create a Mailing for this Batch.
+    #
+    # @yield [Stampr::Mailing] The mailing created.
+    def mailing(&block)
+      Mailing.new batch: self, &block
     end
   end
 end

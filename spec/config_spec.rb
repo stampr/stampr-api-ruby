@@ -32,6 +32,16 @@ describe Stampr::Config do
     end
 
 
+    it "should yield itself if block is given" do
+      yielded = nil
+      config = described_class.new do |c|
+        yielded = c
+      end
+
+      yielded.should eq config
+    end
+
+
     context "from data" do
       let(:data) { Hash[JSON.parse(json_data("config_create")).map {|k, v| [k.to_sym, v]}] }
       let(:subject) { described_class.new data }

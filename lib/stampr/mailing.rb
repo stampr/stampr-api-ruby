@@ -45,6 +45,11 @@ module Stampr
       self.return_address = options[:return_address] || options[:returnaddress] || nil
       self.data = options[:data] || nil
       @id = options[:mailing_id] || nil
+
+      if block_given?
+        yield self 
+        mail
+      end
     end
 
 
@@ -109,8 +114,8 @@ module Stampr
 
     # Mail the mailing on the server.
     def mail
-      return if @id # Don't re-create if it already exists.
-
+      raise APIError, "Already mailed" if @id
+      
       raise APIError, "address required before mailing" unless address
       raise APIError, "return_address required before mailing" unless return_address
 

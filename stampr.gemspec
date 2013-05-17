@@ -26,7 +26,6 @@ EOT
 
   spec.required_ruby_version = ">= 1.9.2" # 1.8.7 is end-of-life.
 
-  spec.add_dependency "config_leaf", "~> 0.0.2"
   spec.add_dependency "rest-client", "~> 1.6.7"
 
   spec.add_development_dependency "webmock", "~> 1.11.0"
