@@ -1,4 +1,5 @@
 require 'base64'
+require 'digest/md5'
 
 module Stampr
   # An individual piece of mail, within a Stampr::Batch
@@ -48,7 +49,14 @@ module Stampr
 
       # Decode the data if it has been recieved through a query. Not if the user set it.
       self.data = if options.key? :data
-        if options.key :batch_id
+        if options.key? :mailing_id
+          # Check MD5 if provided.
+          if options.key? :md5
+            if options[:md5] != Digest::MD5.hexdigest(options[:data])
+              raise ArgumentError.new("MD5 digest does not match data")
+            end
+          end
+
           Base64.decode64 options[:data]
         else
           options[:data]
@@ -143,7 +151,11 @@ module Stampr
       when :json
         params[:data] = Base64.encode64 data.to_json
       when :html, :pdf
-         params[:data] = Base64.encode64 data
+        params[:data] = Base64.encode64 data
+      end
+
+      if params.key? :data
+        params[:md5] = Digest::MD5.hexdigest params[:data]
       end
 
       result = Stampr.client.post "mailings", params

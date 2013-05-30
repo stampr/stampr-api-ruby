@@ -23,6 +23,14 @@ describe Stampr::Mailing do
       ->{ described_class.new batch_id: 2, data: 12 }.should raise_error(TypeError, "Bad format for data")
     end
 
+    it "should succeed with a good MD5" do
+      described_class.new batch_id: 2, mailing_id: 12, data: "sdf", md5: Digest::MD5.hexdigest("sdf")
+    end
+
+    it "should fail with bad MD5" do
+      ->{ described_class.new batch_id: 2, mailing_id: 12, data: "sdf", md5: "234234" }.should raise_error(ArgumentError, "MD5 digest does not match data")
+    end
+
     it "should yield itself then mail itself if block is given" do
       yielded = nil
       mailing = described_class.new batch_id: 1 do |m|
@@ -54,8 +62,8 @@ describe Stampr::Mailing do
       subject = described_class.new batch_id: 2, address: "bleh1", returnaddress: "bleh2", data: data
 
       request = stub_request(:post, "https://user:pass@testing.dev.stam.pr/api/mailings").
-         with(body: {"batch_id"=>"2", "address" => "bleh1", "returnaddress" => "bleh2", "format" => "json", "data" => Base64.encode64(data.to_json) },
-              headers: {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'Content-Length'=>'91', 'Content-Type'=>'application/x-www-form-urlencoded', 'User-Agent'=>'Ruby'}).
+         with(body: {"batch_id"=>"2", "address" => "bleh1", "returnaddress" => "bleh2", "format" => "json", "md5"=>"68a20e4c76504a1c2bded1fee2ffc753", "data" => Base64.encode64(data.to_json) },
+              headers: {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'Content-Length'=>'128', 'Content-Type'=>'application/x-www-form-urlencoded', 'User-Agent'=>'Ruby'}).
          to_return(status: 200, body: json_data("mailing_create"), headers: {})
 
       subject.mail
@@ -69,8 +77,8 @@ describe Stampr::Mailing do
       subject = described_class.new batch_id: 2, address: "bleh1", returnaddress: "bleh2", data: data
 
       request = stub_request(:post, "https://user:pass@testing.dev.stam.pr/api/mailings").
-         with(body: {"batch_id"=>"2", "address" => "bleh1", "returnaddress" => "bleh2", "format" => "html", "data" => Base64.encode64(data) },
-              headers: {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'Content-Length'=>'107', 'Content-Type'=>'application/x-www-form-urlencoded', 'User-Agent'=>'Ruby'}).
+         with(body: {"batch_id"=>"2", "address" => "bleh1", "returnaddress" => "bleh2", "format" => "html", "md5"=>"4e93ef6f0ebfd2887752065b17ddd3e2", "data" => Base64.encode64(data) },
+              headers: {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'Content-Length'=>'144', 'Content-Type'=>'application/x-www-form-urlencoded', 'User-Agent'=>'Ruby'}).
          to_return(status: 200, body: json_data("mailing_create"), headers: {})
 
       subject.mail
@@ -84,8 +92,8 @@ describe Stampr::Mailing do
       subject = described_class.new batch_id: 2, address: "bleh1", returnaddress: "bleh2", data: data
 
       request = stub_request(:post, "https://user:pass@testing.dev.stam.pr/api/mailings").
-         with(body: {"batch_id"=>"2", "address" => "bleh1", "returnaddress" => "bleh2", "format" => "pdf", "data" => Base64.encode64(data) },
-              headers: {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'Content-Length'=>'84', 'Content-Type'=>'application/x-www-form-urlencoded', 'User-Agent'=>'Ruby'}).
+         with(body: {"batch_id"=>"2", "address" => "bleh1", "returnaddress" => "bleh2", "format" => "pdf", "md5"=>"c40b92002dfdac9ee80136d9cc443a2e", "data" => Base64.encode64(data) },
+              headers: {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'Content-Length'=>'121', 'Content-Type'=>'application/x-www-form-urlencoded', 'User-Agent'=>'Ruby'}).
          to_return(status: 200, body: json_data("mailing_create"), headers: {})
 
       subject.mail
