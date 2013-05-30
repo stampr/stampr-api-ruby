@@ -43,14 +43,12 @@ module Stampr
       #
       #     mailings = Stampr::Mailing[time_period]
       #     mailings = Stampr::Mailing[time_period, status: :processing]
-      #     mailings = Stampr::Mailing[time_period, batch: 1231]
       #     mailings = Stampr::Mailing[time_period, batch: my_batch]
-      #     mailings = Stampr::Mailing[time_period, status: :processing, batch: 12313]
       #     mailings = Stampr::Mailing[time_period, status: :processing, batch: my_batch]
       #
       #   @param time_period [Range<Time/DateTime>] Time period to get mailings for.
       #   @option options :status [:processing, :hold, :archive] Status of mailings to find.
-      #   @option options :batch [Stampr::Batch, Integer] Batch (or batch id) to retrieve mailings from.
+      #   @option options :batch [Stampr::Batch] Batch to retrieve mailings from.
       #
       #   @return [Array<Stampr::Mailing>]
       def [](*args)
@@ -99,21 +97,14 @@ module Stampr
             end
           end
 
-          batch_id = case batch
-          when Integer
-            unless batch > 0
-              raise TypeError, ":batch option should be a Stampr::Batch or positive Integer" 
+          batch_id = if batch
+            unless batch.is_a? Stampr::Batch
+              raise TypeError, ":batch option should be a Stampr::Batch" 
             end
-            batch
 
-          when Batch
             batch.id
-
-          when nil
-            nil
-
           else
-            raise TypeError, ":batch option should be a Stampr::Batch or positive Integer" 
+            nil
           end
 
           search = if batch_id and status
