@@ -87,19 +87,44 @@ describe Stampr::Batch do
 
 
   describe "#status=" do
-    let(:subject) { described_class.new config_id: 1 }
+    context "not yet created" do
+      let(:subject) { described_class.new config_id: 1 }
 
-    it "should accept a string" do
-      subject.status = :archive
-      subject.status.should eq :archive
+      it "should accept a correct symbol" do
+        subject.status.should eq :processing # The default.
+        subject.status = :hold
+        subject.status.should eq :hold
+      end
+
+      it "should refuse incorrect symbols" do
+        -> { subject.status = :frog }.should raise_error(ArgumentError, "status must be one of: :processing, :hold, :archive")
+      end
+
+      it "should refuse other data" do
+        -> { subject.status = 14 }.should raise_error(TypeError, "status must be a Symbol")
+      end
     end
 
-    it "should refuse incorrect symbols" do
-      -> { subject.status = :frog }.should raise_error(ArgumentError, "status must be one of: :processing, :hold, :archive")
-    end
+    context "already created" do
+      let(:subject) { described_class.new config_id: 1, batch_id: 2 }
 
-    it "should refuse other data" do
-      -> { subject.status = 14 }.should raise_error(TypeError, "status must be a Symbol")
+      it "should accept a correct symbol" do
+        request = stub_request(:post, "https://user:pass@testing.dev.stam.pr/api/batches/2").
+           with(body: {"status"=>"hold"},
+                headers: {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'Content-Length'=>'11', 'Content-Type'=>'application/x-www-form-urlencoded', 'User-Agent'=>'Ruby'}).
+           to_return(status: 200, body: json_data("batch_create"), headers: {})
+
+        subject.status.should eq :processing
+        subject.status = :hold
+        subject.status.should eq :hold
+
+        request.should have_been_made
+      end
+
+      it "should do nothing if value hasn't changed" do
+        subject.status = :processing
+        subject.status.should eq :processing
+      end
     end
   end
 
@@ -143,7 +168,7 @@ describe Stampr::Batch do
          with(headers: {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'User-Agent'=>'Ruby'}).
          to_return(status: 200, body: [true].to_json, headers: {})
 
-      subject.delete.should eq true
+      subject.delete.should be_nil
 
       request.should have_been_made
     end
@@ -151,7 +176,7 @@ describe Stampr::Batch do
     it "should fail if the batch isn't created yet" do
       subject = described_class.new config_id: 1, template: "Bleh"
 
-      -> { subject.delete.should eq true }.should raise_error Stampr::APIError, "Can't #delete before #create"
+      -> { subject.delete }.should raise_error Stampr::APIError, "Can't #delete before #create"
     end
   end
 

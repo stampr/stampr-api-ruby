@@ -122,6 +122,13 @@ batches = Stampr::Batch[time_period]
 batches = Stampr::Batch[time_period, status: :processing]
 ```
 
+### Updating batches
+
+```ruby
+batch = Stampr::Batch[2451]
+batch.status = :archive
+```
+
 ### Deleting batches
 
 ```ruby

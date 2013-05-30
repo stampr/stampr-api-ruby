@@ -126,7 +126,7 @@ describe Stampr::Mailing do
          with(headers: {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'User-Agent'=>'Ruby'}).
          to_return(status: 200, body: [true].to_json, headers: {})
 
-      subject.delete.should eq true
+      subject.delete.should be_nil
 
       request.should have_been_made
     end
@@ -134,7 +134,7 @@ describe Stampr::Mailing do
     it "should fail if the mailing isn't created yet" do
       subject = described_class.new batch_id: 2
 
-      -> { subject.delete.should eq true }.should raise_error Stampr::APIError, "Can't #delete before #create"
+      -> { subject.delete }.should raise_error Stampr::APIError, "Can't #delete before #create"
     end
   end
 

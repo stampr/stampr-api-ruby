@@ -6,7 +6,7 @@ module Stampr
   # @!attribute template 
   #   @return [String, nil] Template string, for mail merge, if any.
   # @!attribute status
-  #   @return [:processing, :hold, :archive] Status of the mailings in the Batch
+  #   @return [:processing, :hold, :archive] Status of the mailings in the Batch.
   class Batch
     extend Utilities
 
@@ -149,16 +149,18 @@ module Stampr
       @template = value
     end
 
-
-    # One of:
-    # * :processing
-    # * :hold
-    # * :archive
-    #
-    # @return [:processing, :hold, :archive]
     def status=(value)
       raise TypeError, "status must be a Symbol" unless value.is_a? Symbol
       raise ArgumentError, "status must be one of: #{STATUSES.map(&:inspect).join(", ")}" unless STATUSES.include? value
+
+      # If we have already been created, update the status.
+      if @id and not @status.nil? and @status != value
+        params = {
+            status: value,
+        }
+
+        Stampr.client.post ["batches", id], params
+      end
 
       @status = value
     end
