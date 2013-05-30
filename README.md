@@ -145,9 +145,7 @@ my_batch = Stampr::Batch[1234]
 
 mailings = Stampr::Mailing[time_period]
 mailings = Stampr::Mailing[time_period, status: :processing]
-mailings = Stampr::Mailing[time_period, batch: 1231]
 mailings = Stampr::Mailing[time_period, batch: my_batch]
-mailings = Stampr::Mailing[time_period, status: :processing, batch: 12313]
 mailings = Stampr::Mailing[time_period, status: :processing, batch: my_batch]
 ```
 
