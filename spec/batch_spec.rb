@@ -157,16 +157,79 @@ describe Stampr::Batch do
 
 
   describe ".[]" do
-    it "should retreive a specific batch" do
-      request = stub_request(:get, "https://user:pass@testing.dev.stam.pr/api/batches/2").
-         with(headers: {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'User-Agent'=>'Ruby'}).
-         to_return(status: 200, body: json_data("batch_index"), headers: {})
+    context "with id" do
+      it "should retreive a specific batch" do
+        request = stub_request(:get, "https://user:pass@testing.dev.stam.pr/api/batches/1").
+           with(headers: {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'User-Agent'=>'Ruby'}).
+           to_return(status: 200, body: json_data("batch_index"), headers: {})
 
-      batch = Stampr::Batch[2]
+        batch = Stampr::Batch[1]
 
-      batch.id.should eq 2
+        batch.id.should eq 2
 
-      request.should have_been_made
+        request.should have_been_made
+      end
+
+      it "should fail with a negative id" do
+        -> { Stampr::Batch[-1] }.should raise_error(TypeError, "id should be a positive Integer")
+      end
+    end
+
+    context "with range" do
+      [Time, DateTime].each do |period_class|
+        it "should retrieve a list over a #{period_class} period" do
+          requests = [0, 1, 2].map do |i|
+            stub_request(:get, "https://user:pass@testing.dev.stam.pr/api/batches/browse/1900-01-01T00:00:00Z/2000-01-01T00:00:00Z/#{i}").
+               with(headers: {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'User-Agent'=>'Ruby'}).
+               to_return(status: 200, body: json_data("batches_#{i}"), headers: {})
+          end
+
+          from, to = period_class.new(1900, 1, 1, 0, 0, 0, "+00:00"), period_class.new(2000, 1, 1, 0, 0, 0, "+00:00")
+          batches = Stampr::Batch[from..to]
+
+          batches.map(&:id).should eq [2, 3, 4]
+
+          requests.each {|request| request.should have_been_made }
+        end
+      end
+
+      it "should fail with a bad range" do
+        -> { Stampr::Batch[1..3] }.should raise_error(TypeError, "Can only use a range of Time/DateTime")
+      end
+    end
+
+    context "with range & status" do
+      [Time, DateTime].each do |period_class|
+        it "should retrieve a list of batches over a #{period_class} period with given status" do
+          requests = [0, 1, 2].map do |i|
+            stub_request(:get, "https://user:pass@testing.dev.stam.pr/api/batches/with/processing/1900-01-01T00:00:00Z/2000-01-01T00:00:00Z/#{i}").
+               with(headers: {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'User-Agent'=>'Ruby'}).
+               to_return(status: 200, body: json_data("batches_#{i}"), headers: {})
+          end
+
+          from, to = period_class.new(1900, 1, 1, 0, 0, 0, "+00:00"), period_class.new(2000, 1, 1, 0, 0, 0, "+00:00")
+          batches = Stampr::Batch[from..to, status: :processing]
+
+          batches.map(&:id).should eq [2, 3, 4]
+
+          requests.each {|request| request.should have_been_made }
+        end
+      end
+
+    it "should fail with a bad status" do
+        -> { Stampr::Batch[Time.new(1900, 1, 1, 0, 0, 0, "+00:00")..Time.new(2000, 1, 1, 0, 0, 0, "+00:00"), status: 12] }.should raise_error(TypeError, ":status option should be one of :processing, :hold, :archive")
+      end
+      it "should fail with a bad status" do
+        -> { Stampr::Batch[Time.new(1900, 1, 1, 0, 0, 0, "+00:00")..Time.new(2000, 1, 1, 0, 0, 0, "+00:00"), status: :frog] }.should raise_error(ArgumentError, ":status option should be one of :processing, :hold, :archive")
+      end
+
+      it "should fail with a bad range" do
+        -> { Stampr::Batch[1..3, status: :processing] }.should raise_error(TypeError, "Can only use a range of Time/DateTime")
+      end
+    end
+
+    it "should fail with a bad index" do
+      -> { Stampr::Batch["fred"] }.should raise_error(TypeError, "index must be a positive Integer or Time/DateTime range")
     end
   end
 

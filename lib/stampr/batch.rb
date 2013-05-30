@@ -9,15 +9,85 @@ module Stampr
     attr_reader :config_id, :template, :status
 
     class << self
-      # Get the batch with the specific ID.
+      # @overload [](id)
+      #   Get the batch with the specific ID.
       #
-      # @return [Stampr::Batch]
-      def [](id)
-        raise TypeError, "id should be a positive Integer" unless id.is_a?(Integer) && id > 0
+      #   @param id [Integer] ID of batch to retreive.
+      #
+      #   @return [Stampr::Mailing]
+      #
+      # @overload [](time_period, options = {})
+      #   Get the batches between two times.
+      #
+      #   @param time_period [Range<Time/DateTime>] Time period to get mailings for.
+      #   @options :status [:processing, :hold, :archive] Status of batch to find.
+      #   @return [Array<Stampr::Batch>]
+      def [](*args)
+        case args[0]
+        when Integer
+          unless args.size == 1
+            raise ArgumentError, "Only expected a single argument when searching by ID" 
+          end
 
-        batches = Stampr.client.get ["batches", id]
-        batch = batches.first
-        self.new symbolize_hash_keys(batch)       
+          id = args[0]
+
+          unless id.is_a?(Integer) && id > 0
+            raise TypeError, "id should be a positive Integer" 
+          end
+
+          batches = Stampr.client.get ["batches", id]
+          self.new symbolize_hash_keys(batches.first)
+
+        when Range
+          unless args.size.between? 1, 2
+            raise ArgumentError, "Expected one or two arguments when searching over time period"
+          end
+
+          range = args[0]
+          options = args[1] || {}
+
+          unless options.nil? or options.is_a? Hash
+            raise TypeError, "options, if present, should be a Hash" 
+          end
+
+          from, to = range.first, range.last
+          unless from.respond_to? :to_time and to.respond_to? :to_time
+            raise TypeError, "Can only use a range of Time/DateTime"
+          end
+
+          search = if options.key? :status
+            unless options[:status].is_a? Symbol
+              raise TypeError, ":status option should be one of #{STATUSES.map(&:inspect).join ", "}" 
+            end
+
+            unless STATUSES.include? options[:status]
+              raise ArgumentError, ":status option should be one of #{STATUSES.map(&:inspect).join ", "}" 
+            end
+
+            ["with", options[:status]]      
+          else
+            ["browse"]   
+          end
+
+          all_batches = []
+          i = 0
+
+          loop do
+            batches = Stampr.client.get ["batches", *search,
+                from.to_time.utc.iso8601, to.to_time.utc.iso8601, i]
+
+            break if batches.empty?
+
+            all_batches.concat batches.map {|m| self.new symbolize_hash_keys(m) }
+
+            i += 1
+          end
+
+          all_batches
+
+        else
+          raise TypeError, "index must be a positive Integer or Time/DateTime range"
+        end     
       end
     end
 
