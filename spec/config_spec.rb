@@ -104,20 +104,15 @@ describe Stampr::Config do
   end
 
 
-  describe ".each" do
-    it "should yield each config" do
+  describe ".all" do
+    it "should get a list of all configs" do
       requests = [0, 1, 2].map do |i|
         stub_request(:get, "https://user:pass@testing.dev.stam.pr/api/configs/all/#{i}").
            with(headers: {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'User-Agent'=>'Ruby'}).
            to_return(status: 200, body: json_data("configs_#{i}"), headers: {})
       end
 
-      configs_ids = []
-
-      Stampr::Config.each do |config|
-        configs_ids << config.id
-      end
-
+      configs_ids = Stampr::Config.all.map &:id
       configs_ids.should eq [4677, 4678, 4679]
 
       requests.each {|request| request.should have_been_made }

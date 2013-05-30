@@ -25,25 +25,23 @@ module Stampr
         self.new symbolize_hash_keys(config)       
       end
 
-      # Iterate through all configs defined in your Stampr account.
+      # Get a list of all configs defined in your Stampr account.
       #
-      # @yield [Stampr::Config]
-      def each
-        return enum_for(:each) unless block_given?
-
+      # @return [Array<Stampr::Config>]
+      def all
+        all_configs = []
         i = 0
 
         loop do
           configs = Stampr.client.get ["configs", "all", i]
-
           break if configs.empty?
 
-          configs.each do |config|
-            yield self.new(symbolize_hash_keys(config))
-          end   
+          all_configs.concat configs.map {|c| self.new symbolize_hash_keys(c) }
 
           i += 1
         end 
+
+        all_configs
       end
     end
 
