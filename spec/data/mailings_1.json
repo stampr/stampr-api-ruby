@@ -1,0 +1,9 @@
+[
+    {
+        "mailing_id": 3,
+        "address": "bleh1",
+        "returnaddress": "bleh2",
+        "format": "none",
+        "batch_id": 2
+    }
+]

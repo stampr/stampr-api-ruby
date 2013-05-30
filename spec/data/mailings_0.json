@@ -1,0 +1,16 @@
+[
+    {
+        "mailing_id": 1,
+        "address": "bleh1",
+        "returnaddress": "bleh2",
+        "format": "none",
+        "batch_id": 2
+    },
+    {
+        "mailing_id": 2,
+        "address": "bleh1",
+        "returnaddress": "bleh2",
+        "format": "none",
+        "batch_id": 2
+    }
+]

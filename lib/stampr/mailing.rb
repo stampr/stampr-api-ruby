@@ -1,5 +1,6 @@
 require 'base64'
 require 'digest/md5'
+require 'time'
 
 module Stampr
   # An individual piece of mail, within a Stampr::Batch
@@ -9,15 +10,52 @@ module Stampr
     attr_accessor :address, :return_address, :format, :data, :batch_id
 
     class << self
-      # Get the mailing with the specific ID.
+      # @overload [](id)
+      #   Get the mailing with the specific ID.
       #
-      # @return [Stampr::Mailing]
-      def [](id)
-        raise TypeError, "id should be a positive Integer" unless id.is_a?(Integer) && id > 0
+      #   @param id [Integer] ID of mailing to retreive.
+      #
+      #   @return [Stampr::Mailing]
+      #
+      # @overload [](time_period)
+      #   Get the mailing between two times.
+      #
+      #   @param time_period [Range<Time/DateTime>] Time period to get mailings for.
+      #
+      #   @return [Array<Stampr::Mailing>]
+      def [](index)
+        case index
+        when Integer
+          raise TypeError, "index should be a positive Integer" unless index.is_a?(Integer) && index > 0
 
-        mailings = Stampr.client.get ["mailings", id]
-        mailing = mailings.first
-        self.new symbolize_hash_keys(mailing)       
+          mailings = Stampr.client.get ["mailings", index]
+          mailing = mailings.first
+          self.new symbolize_hash_keys(mailing)
+
+        when Range
+          from, to = index.first, index.last
+          unless from.respond_to? :to_time and to.respond_to? :to_time
+            raise TypeError, "Can only use a range of Time/DateTime"
+          end
+
+          all_mailings = []
+          i = 0
+
+          loop do
+            mailings = Stampr.client.get ["mailings", "browse", from.to_time.utc.iso8601, to.to_time.utc.iso8601, i]
+
+            break if mailings.empty?
+
+            all_mailings.concat mailings.map {|m| self.new symbolize_hash_keys(m) }
+
+            i += 1
+          end
+
+          all_mailings
+
+        else
+          raise TypeError, "index must be a positive Integer or Time/DateTime range"
+        end     
       end
     end
 
@@ -53,7 +91,7 @@ module Stampr
           # Check MD5 if provided.
           if options.key? :md5
             if options[:md5] != Digest::MD5.hexdigest(options[:data])
-              raise ArgumentError.new("MD5 digest does not match data")
+              raise ArgumentError, "MD5 digest does not match data"
             end
           end
 

@@ -140,16 +140,49 @@ describe Stampr::Mailing do
 
 
   describe ".[]" do
-    it "should retreive a specific mailing" do
-      request = stub_request(:get, "https://user:pass@testing.dev.stam.pr/api/mailings/1").
-         with(headers: {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'User-Agent'=>'Ruby'}).
-         to_return(status: 200, body: json_data("mailing_index"), headers: {})
+    context "with id" do
+      it "should retreive a specific mailing" do
+        request = stub_request(:get, "https://user:pass@testing.dev.stam.pr/api/mailings/1").
+           with(headers: {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'User-Agent'=>'Ruby'}).
+           to_return(status: 200, body: json_data("mailing_index"), headers: {})
 
-      mailing = Stampr::Mailing[1]
+        mailing = Stampr::Mailing[1]
 
-      mailing.id.should eq 1
+        mailing.id.should eq 1
 
-      request.should have_been_made
+        request.should have_been_made
+      end
+
+      it "should fail with a negative id" do
+        -> { Stampr::Mailing[-1] }.should raise_error(TypeError, "index should be a positive Integer")
+      end
+    end
+
+    context "with range" do
+      [Time, DateTime].each do |period_class|
+        it "should retrieve a list over a #{period_class} period" do
+          requests = [0, 1, 2].map do |i|
+            stub_request(:get, "https://user:pass@testing.dev.stam.pr/api/mailings/browse/1900-01-01T00:00:00Z/2000-01-01T00:00:00Z/#{i}").
+               with(headers: {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'User-Agent'=>'Ruby'}).
+               to_return(status: 200, body: json_data("mailings_#{i}"), headers: {})
+          end
+
+          from, to = period_class.new(1900, 1, 1, 0, 0, 0, "+00:00"), period_class.new(2000, 1, 1, 0, 0, 0, "+00:00")
+          mailings = Stampr::Mailing[from..to]
+
+          mailings.map(&:id).should eq [1, 2, 3]
+
+          requests.each {|request| request.should have_been_made }
+        end
+      end
+
+      it "should fail with a bad range" do
+        -> { Stampr::Mailing[1..3] }.should raise_error(TypeError, "Can only use a range of Time/DateTime")
+      end
+    end
+
+    it "should fail with a bad index" do
+      -> { Stampr::Mailing["fred"] }.should raise_error(TypeError, "index must be a positive Integer or Time/DateTime range")
     end
   end
 end
