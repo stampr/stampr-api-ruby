@@ -31,5 +31,6 @@ EOT
   spec.add_development_dependency "webmock", "~> 1.11.0"
   spec.add_development_dependency "rspec", "~> 2.13.0"
   spec.add_development_dependency "bundler", "~> 1.3"
+  spec.add_development_dependency "redcarpet", "~> 2.3.0"
   spec.add_development_dependency "rake"
 end

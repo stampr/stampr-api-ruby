@@ -23,8 +23,7 @@ module Stampr
       #
       #   @param time_period [Range<Time/DateTime>] Time period to get mailings for.
       #   @option options :status [:processing, :hold, :archive] Status of mailings to find.
-      #   @option options :batch_id [Integer] ID of batch to retrieve mailings from.
-      #   @option options :batch [Stampr::Batch] Batch to retrieve mailings from.
+      #   @option options :batch [Stampr::Batch, Integer] Batch (or batch id) to retrieve mailings from.
       #
       #   @return [Array<Stampr::Mailing>]
       def [](*args)
@@ -61,7 +60,7 @@ module Stampr
             raise TypeError, "Can only use a range of Time/DateTime"
           end
 
-          status, batch_id, batch = options[:status], options[:batch_id], options[:batch]
+          status, batch = options[:status], options[:batch]
 
           if status
             unless status.is_a? Symbol
@@ -73,22 +72,21 @@ module Stampr
             end
           end
 
-          if batch and batch_id
-            raise ArgumentError, "Expected :batch OR :batch_id options"
-          end
-
-          if batch_id
-            unless batch_id.is_a? Integer and batch_id > 0
-              raise TypeError, ":status option should be a positive Integer" 
+          batch_id = case batch
+          when Integer
+            unless batch > 0
+              raise TypeError, ":batch option should be a Stampr::Batch or positive Integer" 
             end
-          end
+            batch
 
-          if batch
-            unless batch.is_a? Batch
-              raise TypeError, ":batch option should be a Stampr::Batch" 
-            end
+          when Batch
+            batch.id
 
-            batch_id = batch.id
+          when nil
+            nil
+
+          else
+            raise TypeError, ":batch option should be a Stampr::Batch or positive Integer" 
           end
 
           search = if batch_id and status
