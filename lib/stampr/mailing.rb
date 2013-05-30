@@ -4,14 +4,30 @@ require 'time'
 
 module Stampr
   # An individual piece of mail, within a Stampr::Batch
+  # 
+  # @!attribute [r] batch_id
+  #   @return [Integer] The ID of the Batch associated with the mailing.
+  # @!attribute address
+  #   @return [String] Address to send mail to.
+  # @!attribute return_address
+  #   @return [String] Return address for mail.
+  # @!attribute [r] format
+  #   @return [String] Format of the data
+  # @!attribute data
+  #   @return [String, Hash] PDF data string, HTML document string, or key/value hash (for mail merge)
   class Mailing
     extend Utilities
 
     attr_accessor :address, :return_address, :format, :data, :batch_id
 
     class << self
+      # Access a single Mailing or all mailings over a range of time.
+      #
       # @overload [](id)
       #   Get the mailing with the specific ID.
+      #
+      #   @example
+      #     mailing = Stampr::Mailing[123123]
       #
       #   @param id [Integer] ID of mailing to retreive.
       #
@@ -20,6 +36,17 @@ module Stampr
       # @overload [](time_period, options = {})
       #   Get the mailing between two times, optionally only with a specific
       #   status and/or in a specific batch (:batch OR :batch_id option should be used)
+      #
+      #   @example
+      #     time_period = Time.new(2012, 1, 1, 0, 0, 0)..Time.now
+      #     my_batch = Stampr::Batch[1234]
+      #
+      #     mailings = Stampr::Mailing[time_period]
+      #     mailings = Stampr::Mailing[time_period, status: :processing]
+      #     mailings = Stampr::Mailing[time_period, batch: 1231]
+      #     mailings = Stampr::Mailing[time_period, batch: my_batch]
+      #     mailings = Stampr::Mailing[time_period, status: :processing, batch: 12313]
+      #     mailings = Stampr::Mailing[time_period, status: :processing, batch: my_batch]
       #
       #   @param time_period [Range<Time/DateTime>] Time period to get mailings for.
       #   @option options :status [:processing, :hold, :archive] Status of mailings to find.
@@ -124,15 +151,17 @@ module Stampr
 
 
     # @option options :batch [Stampr::Batch]
-    # @option options :batch_id [Integer]
     # @option options :address [String]
     # @option options :return_address [String]
     # @option options :data [String, Hash] Hash for mail merge, String for HTML or PDF format.
+    # @yield [Stampr::Mailing] self
+    # @raise [ArgumentError, TypeError]
     def initialize(options = {})
       if options.key?(:batch_id) && options.key?(:batch)
         raise ArgumentError, "Must supply :batch_id OR :batch options" 
       end
 
+      # :batch_id is used internally. Shouldn't be used by end-user.
       @batch_id = if options.key? :batch_id
         unless options[:batch_id].is_a? Integer
           raise TypeError, ":batch_id option must be an Integer" 
@@ -180,8 +209,6 @@ module Stampr
       end
     end
 
-
-    # Set the address to send mail to.
     def address=(value)
       unless value.nil? or value.is_a? String
         raise TypeError, "address must be a String"
@@ -190,8 +217,6 @@ module Stampr
       @address = value
     end
 
-
-    # Set the return address for the mail.
     def return_address=(value)
       unless value.nil? or value.is_a? String
         raise TypeError, "return_address must be a String" 
@@ -200,8 +225,6 @@ module Stampr
       @return_address = value
     end
 
-
-    # Set the data (HTML string, mail-merge Hash, PDF data or nil)
     def data=(value)
       old_data, @data = @data, value
       begin
@@ -221,10 +244,6 @@ module Stampr
       @id
     end
 
-
-    # The format of the mailing data.
-    #
-    # @return [:json, :pdf, :html, :none]
     def format
       case data
       when Hash
@@ -245,6 +264,7 @@ module Stampr
 
 
     # Mail the mailing on the server.
+    # @return [Stampr::Mailing] self
     def mail
       raise APIError, "Already mailed" if @id
       
@@ -279,7 +299,7 @@ module Stampr
 
     # Delete the mailing on the server.
     #
-    # @return true on successful deletion.
+    # @return [nil]
     def delete
       raise APIError, "Can't #delete before #create" unless @id
 
@@ -287,7 +307,7 @@ module Stampr
 
       Stampr.client.delete ["mailings", id]
 
-      true
+      nil
     end
   end
 end

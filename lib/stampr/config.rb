@@ -1,7 +1,16 @@
 module Stampr
   # Mailing configuration to be used with Batches.
   #
-  # TODO: Allow attributes to be set.
+  # @!attribute [rw] size
+  #   @return [:standard] The ID of the config associated with the mailing.
+  # @!attribute [rw] style 
+  #   @return [:color] Style of printing.
+  # @!attribute [rw] turnaround 
+  #   @return [:threeday] Time for turnaround of post.
+  # @!attribute [rw] output
+  #   @return [:single] Type of output printing.
+  # @!attribute [rw] return_envelope
+  #   @return [false] Whether to include a return envelope
   class Config
     extend Utilities
 
@@ -16,6 +25,9 @@ module Stampr
     class << self
       # Get the config with a specific id.
       #
+      # @example
+      #   config = Stampr::Config[123123]
+      #
       # @return [Stampr::Config]
       def [](id)
         raise TypeError, "Expecting positive Integer" unless id.is_a?(Integer) && id > 0
@@ -26,6 +38,9 @@ module Stampr
       end
 
       # Get a list of all configs defined in your Stampr account.
+      #
+      # @example
+      #   configs = Stampr::Config.all
       #
       # @return [Array<Stampr::Config>]
       def all

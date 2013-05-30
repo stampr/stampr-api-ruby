@@ -34,7 +34,9 @@ $ gem install stampr
 Usage
 -----
 
-Example of sending a letter via the simple API:
+### Example of sending letters via the simple API
+
+In this case, all mailings will be in individual batches and with default config.
 
 ```ruby
 require 'stampr'
@@ -46,32 +48,9 @@ Stampr.mail my_address, dest_address_1, body1
 Stampr.mail my_address, dest_address_2, body2
 ```
 
-Using mail-merge with [Mustache template](http://mustache.github.io/):
+### More complex example
 
-```ruby
-require 'stampr'
-
-Stampr.authenticate "username", "password"
-
-Stampr::Batch.new do |b|
-  b.template = "<html>Hello {{name}}!</html>"
-
-  b.mail do |m|
-    m.address = dest_address_1
-    m.return_address = my_address
-    m.data = { name: "Marie" }
-  end
-
-  b.mail do |m|
-    m.address = dest_address_2
-    m.return_address = my_address
-    m.data = { name: "Romy" }
-  end
-end
-
-```
-
-More complex example:
+Managing config and grouping mailings into a single batch.
 
 ```ruby
 require 'stampr'
@@ -95,10 +74,9 @@ Stampr::Batch.new config: config do |b|
     m.data = body2
   end
 end
-
 ```
 
-Complex example without using blocks:
+And without using blocks:
 
 ```ruby
 require 'stampr'
@@ -124,7 +102,76 @@ mailing2.address = dest_address_2
 mailing2.return_address = my_address
 mailing2.data = data2
 mailing2.mail
+```
 
+### Browsing configs
+
+```ruby
+config = Stampr::Config[123123]
+configs = Stampr::Config.all
+```
+
+### Browsing batches
+
+```ruby
+batch = Stampr::Batch[2451]
+
+time_period = Time.new(2012, 1, 1, 0, 0, 0)..Time.now
+
+batches = Stampr::Batch[time_period]
+batches = Stampr::Batch[time_period, status: :processing]
+```
+
+### Deleting batches
+
+```ruby
+Stampr::Batch[2451].delete
+```
+
+### Browsing mailings
+
+```ruby
+mailing = Stampr::Mailing[123123]
+
+time_period = Time.new(2012, 1, 1, 0, 0, 0)..Time.now
+my_batch = Stampr::Batch[1234]
+
+mailings = Stampr::Mailing[time_period]
+mailings = Stampr::Mailing[time_period, status: :processing]
+mailings = Stampr::Mailing[time_period, batch: 1231]
+mailings = Stampr::Mailing[time_period, batch: my_batch]
+mailings = Stampr::Mailing[time_period, status: :processing, batch: 12313]
+mailings = Stampr::Mailing[time_period, status: :processing, batch: my_batch]
+```
+
+### Deleting mailings
+
+```ruby
+Stampr::Mailing[2451].delete
+```
+
+### Using mail-merge with [Mustache template](http://mustache.github.io/)
+
+```ruby
+require 'stampr'
+
+Stampr.authenticate "username", "password"
+
+Stampr::Batch.new do |b|
+  b.template = "<html>Hello {{name}}, would you like to buy some {{items}}!</html>"
+
+  b.mailing do |m|
+    m.address = dest_address_1
+    m.return_address = my_address
+    m.data = { name: "Marie", items: "electric eels" }
+  end
+
+  b.mailing do |m|
+    m.address = dest_address_2
+    m.return_address = my_address
+    m.data = { name: "Romy", items: "scintillating hackers" }
+  end
+end
 ```
 
 

@@ -1,5 +1,12 @@
 module Stampr
   # A batch of Stampr::Mailing
+  #
+  # @!attribute [r] config_id
+  #   @return [Integer] The ID of the config associated with the mailing.
+  # @!attribute template 
+  #   @return [String, nil] Template string, for mail merge, if any.
+  # @!attribute status
+  #   @return [:processing, :hold, :archive] Status of the mailings in the Batch
   class Batch
     extend Utilities
 
@@ -9,18 +16,30 @@ module Stampr
     attr_reader :config_id, :template, :status
 
     class << self
+      # Access a single Batch or all mailings over a range of time.
+      #
       # @overload [](id)
       #   Get the batch with the specific ID.
       #
+      #   @example
+      #     batch = Stampr::Batch[2451]
+      #
       #   @param id [Integer] ID of batch to retreive.
       #
-      #   @return [Stampr::Mailing]
+      #   @return [Stampr::Batch]
       #
       # @overload [](time_period, options = {})
       #   Get the batches between two times.
       #
+      #   @example
+      #     time_period = Time.new(2012, 1, 1, 0, 0, 0)..Time.now
+      #
+      #     batches = Stampr::Batch[time_period]
+      #     batches = Stampr::Batch[time_period, status: :processing]
+      #
       #   @param time_period [Range<Time/DateTime>] Time period to get mailings for.
       #   @option options :status [:processing, :hold, :archive] Status of batch to find.
+      #
       #   @return [Array<Stampr::Batch>]
       def [](*args)
         case args[0]
@@ -94,13 +113,15 @@ module Stampr
 
     # If neither :config_id or :config options are provided, then a new, default, config will be applied to this batch.
     #
-    # @option options :config_id [Integer] ID of the config to use.
     # @option options :config [Stampr::Config] Config to use.
     # @option options :template [String]
     # @option options :status [:processing, :hold] The initial status of the mailing (:processing)
+    # @yield [Stampr::Mailing] self
+    # @raise [ArgumentError, TypeError]
     def initialize(options={})
       raise ArgumentError, "Must supply :config_id OR :config options" if options.key?(:config_id) && options.key?(:config)
 
+      # Config ID is only used internally. User should use config.
       @config_id = if options.key? :config_id
         raise TypeError, ":config_id option must be an Integer" unless options[:config_id].is_a? Integer
         options[:config_id]
@@ -173,7 +194,7 @@ module Stampr
 
     # Delete the config on the server (this will fail if there are mailings still inside the batch).
     #
-    # @return true on successful deletion.
+    # @return [nil]
     def delete
       raise APIError, "Can't #delete before #create" unless @id
 
@@ -181,13 +202,14 @@ module Stampr
 
       Stampr.client.delete ["batches", id]
 
-      true
+      nil
     end
 
 
     # Create a Mailing for this Batch.
     #
     # @yield [Stampr::Mailing] The mailing created.
+    # @return [Stampr::Mailing]
     def mailing(&block)
       Mailing.new batch: self, &block
     end
