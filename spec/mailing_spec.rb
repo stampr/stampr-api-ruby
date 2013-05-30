@@ -51,8 +51,10 @@ describe Stampr::Mailing do
               headers: {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'Content-Length'=>'56', 'Content-Type'=>'application/x-www-form-urlencoded', 'User-Agent'=>'Ruby'}).
          to_return(status: 200, body: json_data("mailing_create"), headers: {})
 
+      subject.status.should be_nil
       subject.mail
       subject.id.should eq 1
+      subject.status.should eq :received
 
       request.should have_been_made
     end
@@ -66,8 +68,10 @@ describe Stampr::Mailing do
               headers: {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'Content-Length'=>'128', 'Content-Type'=>'application/x-www-form-urlencoded', 'User-Agent'=>'Ruby'}).
          to_return(status: 200, body: json_data("mailing_create"), headers: {})
 
+      subject.status.should be_nil
       subject.mail
       subject.id.should eq 1
+      subject.status.should eq :received
 
       request.should have_been_made
     end
@@ -81,8 +85,10 @@ describe Stampr::Mailing do
               headers: {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'Content-Length'=>'144', 'Content-Type'=>'application/x-www-form-urlencoded', 'User-Agent'=>'Ruby'}).
          to_return(status: 200, body: json_data("mailing_create"), headers: {})
 
+      subject.status.should be_nil
       subject.mail
       subject.id.should eq 1
+      subject.status.should eq :received
 
       request.should have_been_made
     end
@@ -96,8 +102,10 @@ describe Stampr::Mailing do
               headers: {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'Content-Length'=>'121', 'Content-Type'=>'application/x-www-form-urlencoded', 'User-Agent'=>'Ruby'}).
          to_return(status: 200, body: json_data("mailing_create"), headers: {})
 
+      subject.status.should be_nil
       subject.mail
       subject.id.should eq 1
+      subject.status.should eq :received
 
       request.should have_been_made
     end
@@ -151,6 +159,7 @@ describe Stampr::Mailing do
         mailing = Stampr::Mailing[1]
 
         mailing.id.should eq 1
+        mailing.status.should eq :received
 
         request.should have_been_made
       end
@@ -229,11 +238,11 @@ describe Stampr::Mailing do
       end
 
       it "should fail with a bad status type" do
-        -> { Stampr::Mailing[Time.new(1900, 1, 1, 0, 0, 0, "+00:00")..Time.new(2000, 1, 1, 0, 0, 0, "+00:00"), status: 12] }.should raise_error(TypeError, ":status option should be one of :processing, :hold, :archive")
+        -> { Stampr::Mailing[Time.new(1900, 1, 1, 0, 0, 0, "+00:00")..Time.new(2000, 1, 1, 0, 0, 0, "+00:00"), status: 12] }.should raise_error(TypeError, ":status option should be one of :received, :render, :error, :queued, :assigned, :processing, :printed, :shipped")
       end
 
       it "should fail with a bad status symbol" do
-        -> { Stampr::Mailing[Time.new(1900, 1, 1, 0, 0, 0, "+00:00")..Time.new(2000, 1, 1, 0, 0, 0, "+00:00"), status: :frog] }.should raise_error(ArgumentError, ":status option should be one of :processing, :hold, :archive")
+        -> { Stampr::Mailing[Time.new(1900, 1, 1, 0, 0, 0, "+00:00")..Time.new(2000, 1, 1, 0, 0, 0, "+00:00"), status: :frog] }.should raise_error(ArgumentError, ":status option should be one of :received, :render, :error, :queued, :assigned, :processing, :printed, :shipped")
       end
 
       it "should fail with a bad range" do

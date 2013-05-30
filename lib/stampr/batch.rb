@@ -3,8 +3,10 @@ module Stampr
   #
   # @!attribute [r] config_id
   #   @return [Integer] The ID of the config associated with the mailing.
+  #
   # @!attribute template 
   #   @return [String, nil] Template string, for mail merge, if any.
+  #
   # @!attribute status
   #   @return [:processing, :hold, :archive] Status of the mailings in the Batch.
   class Batch

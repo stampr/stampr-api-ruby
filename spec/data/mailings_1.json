@@ -4,6 +4,7 @@
         "address": "bleh1",
         "returnaddress": "bleh2",
         "format": "none",
-        "batch_id": 2
+        "batch_id": 2,
+        "status": "received"
     }
 ]

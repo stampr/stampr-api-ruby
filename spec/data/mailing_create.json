@@ -4,5 +4,6 @@
     "returnaddress": "bleh2",
     "format": "json",
     "data": "{\"fred\": \"savage\"}",
-    "batch_id": 2
+    "batch_id": 2,
+    "status": "received"
 }

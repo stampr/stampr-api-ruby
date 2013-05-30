@@ -7,18 +7,27 @@ module Stampr
   # 
   # @!attribute [r] batch_id
   #   @return [Integer] The ID of the Batch associated with the mailing.
+  #
   # @!attribute address
   #   @return [String] Address to send mail to.
+  #
   # @!attribute return_address
-  #   @return [String] Return address for mail.
+  #   @return [String] Return address for mail
+  #
   # @!attribute [r] format
   #   @return [String] Format of the data
+  #
   # @!attribute data
   #   @return [String, Hash] PDF data string, HTML document string, or key/value hash (for mail merge)
+  #
+  # @!attribute [r] status
+  #   @return [nil, :received, :render, :error, :queued, :assigned, :processing, :printed, :shipped] Status of the mailing (nil before it is sent).
   class Mailing
     extend Utilities
 
-    attr_accessor :address, :return_address, :format, :data, :batch_id
+    STATUSES = [:received, :render, :error, :queued, :assigned, :processing, :printed, :shipped]
+
+    attr_accessor :address, :return_address, :format, :data, :batch_id, :status
 
     class << self
       # Access a single Mailing or all mailings over a range of time.
@@ -47,7 +56,7 @@ module Stampr
       #     mailings = Stampr::Mailing[time_period, status: :processing, batch: my_batch]
       #
       #   @param time_period [Range<Time/DateTime>] Time period to get mailings for.
-      #   @option options :status [:processing, :hold, :archive] Status of mailings to find.
+      #   @option options :status [:received :render, :error, :queued, :assigned, :processing, :printed, :shipped] Status of mailings to find.
       #   @option options :batch [Stampr::Batch] Batch to retrieve mailings from.
       #
       #   @return [Array<Stampr::Mailing>]
@@ -89,11 +98,11 @@ module Stampr
 
           if status
             unless status.is_a? Symbol
-              raise TypeError, ":status option should be one of #{Batch::STATUSES.map(&:inspect).join ", "}" 
+              raise TypeError, ":status option should be one of #{STATUSES.map(&:inspect).join ", "}" 
             end
 
-            unless Batch::STATUSES.include? status
-              raise ArgumentError, ":status option should be one of #{Batch::STATUSES.map(&:inspect).join ", "}" 
+            unless STATUSES.include? status
+              raise ArgumentError, ":status option should be one of #{STATUSES.map(&:inspect).join ", "}" 
             end
           end
 
@@ -174,7 +183,7 @@ module Stampr
       self.address = options[:address] || nil
       self.return_address = options[:return_address] || options[:returnaddress] || nil
 
-      # Decode the data if it has been recieved through a query. Not if the user set it.
+      # Decode the data if it has been received through a query. Not if the user set it.
       self.data = if options.key? :data
         if options.key? :mailing_id
           # Check MD5 if provided.
@@ -188,6 +197,12 @@ module Stampr
         else
           options[:data]
         end
+      else
+        nil
+      end
+
+      @status = if options.key? :status
+        options[:status].to_sym
       else
         nil
       end
@@ -283,6 +298,8 @@ module Stampr
       result = Stampr.client.post "mailings", params
                                   
       @id = result["mailing_id"]
+
+      @status = :received
 
       self
     end

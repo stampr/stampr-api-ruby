@@ -3,12 +3,16 @@ module Stampr
   #
   # @!attribute [rw] size
   #   @return [:standard] The ID of the config associated with the mailing.
+  #
   # @!attribute [rw] style 
   #   @return [:color] Style of printing.
+  #
   # @!attribute [rw] turnaround 
   #   @return [:threeday] Time for turnaround of post.
+  #
   # @!attribute [rw] output
   #   @return [:single] Type of output printing.
+  #
   # @!attribute [rw] return_envelope
   #   @return [false] Whether to include a return envelope
   class Config
