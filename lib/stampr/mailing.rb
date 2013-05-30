@@ -17,32 +17,66 @@ module Stampr
       #
       #   @return [Stampr::Mailing]
       #
-      # @overload [](time_period)
+      # @overload [](time_period, options = {})
       #   Get the mailing between two times.
       #
       #   @param time_period [Range<Time/DateTime>] Time period to get mailings for.
-      #
+      #   @options :status [:processing, :hold, :archive] Status of mailings to find.
       #   @return [Array<Stampr::Mailing>]
-      def [](index)
-        case index
+      def [](*args)
+        case args[0]
         when Integer
-          raise TypeError, "index should be a positive Integer" unless index.is_a?(Integer) && index > 0
+          unless args.size == 1
+            raise ArgumentError, "Only expected a single argument when searching by ID" 
+          end
 
-          mailings = Stampr.client.get ["mailings", index]
+          id = args[0]
+
+          unless id.is_a?(Integer) && id > 0
+            raise TypeError, "id should be a positive Integer" 
+          end
+
+          mailings = Stampr.client.get ["mailings", id]
           mailing = mailings.first
           self.new symbolize_hash_keys(mailing)
 
         when Range
-          from, to = index.first, index.last
+          unless args.size.between? 1, 2
+            raise ArgumentError, "Expected one or two arguments when searching over time period"
+          end
+
+          range = args[0]
+          options = args[1] || {}
+
+          unless options.nil? or options.is_a? Hash
+            raise TypeError, "options, if present, should be a Hash" 
+          end
+
+          from, to = range.first, range.last
           unless from.respond_to? :to_time and to.respond_to? :to_time
             raise TypeError, "Can only use a range of Time/DateTime"
+          end
+
+          search = if options.key? :status
+            unless options[:status].is_a? Symbol
+              raise TypeError, ":status option should be one of #{Batch::STATUSES.map(&:inspect).join ", "}" 
+            end
+
+            unless Batch::STATUSES.include? options[:status]
+              raise ArgumentError, ":status option should be one of #{Batch::STATUSES.map(&:inspect).join ", "}" 
+            end
+
+            ["with", options[:status]]      
+          else
+            ["browse"]   
           end
 
           all_mailings = []
           i = 0
 
           loop do
-            mailings = Stampr.client.get ["mailings", "browse", from.to_time.utc.iso8601, to.to_time.utc.iso8601, i]
+            mailings = Stampr.client.get ["mailings", *search,
+                from.to_time.utc.iso8601, to.to_time.utc.iso8601, i]
 
             break if mailings.empty?
 
@@ -66,14 +100,20 @@ module Stampr
     # @option options :return_address [String]
     # @option options :data [String, Hash] Hash for mail merge, String for HTML or PDF format.
     def initialize(options = {})
-      raise ArgumentError, "Must supply :batch_id OR :batch options" if options.key?(:batch_id) && options.key?(:batch)
+      if options.key?(:batch_id) && options.key?(:batch)
+        raise ArgumentError, "Must supply :batch_id OR :batch options" 
+      end
 
       @batch_id = if options.key? :batch_id
-        raise TypeError, ":batch_id option must be an Integer" unless options[:batch_id].is_a? Integer
+        unless options[:batch_id].is_a? Integer
+          raise TypeError, ":batch_id option must be an Integer" 
+        end
         options[:batch_id]
 
       elsif options.key? :batch
-        raise TypeError, ":batch option must be an Stampr::Batch" unless options[:batch].is_a? Stampr::Batch
+        unless options[:batch].is_a? Stampr::Batch
+          raise TypeError, ":batch option must be an Stampr::Batch"
+        end
         options[:batch].id
 
       else
@@ -114,7 +154,9 @@ module Stampr
 
     # Set the address to send mail to.
     def address=(value)
-      raise TypeError, "address must be a String" unless value.nil? or value.is_a? String
+      unless value.nil? or value.is_a? String
+        raise TypeError, "address must be a String"
+      end
 
       @address = value
     end
@@ -122,7 +164,9 @@ module Stampr
 
     # Set the return address for the mail.
     def return_address=(value)
-      raise TypeError, "return_address must be a String" unless value.nil? or value.is_a? String
+      unless value.nil? or value.is_a? String
+        raise TypeError, "return_address must be a String" 
+      end
 
       @return_address = value
     end
