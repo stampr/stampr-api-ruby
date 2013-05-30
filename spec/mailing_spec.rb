@@ -54,8 +54,8 @@ describe Stampr::Mailing do
       subject = described_class.new batch_id: 2, address: "bleh1", returnaddress: "bleh2", data: data
 
       request = stub_request(:post, "https://user:pass@testing.dev.stam.pr/api/mailings").
-         with(body: {"batch_id"=>"2", "address" => "bleh1", "returnaddress" => "bleh2", "format" => "json", "data" => data.to_json},
-              headers: {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'Content-Length'=>'93', 'Content-Type'=>'application/x-www-form-urlencoded', 'User-Agent'=>'Ruby'}).
+         with(body: {"batch_id"=>"2", "address" => "bleh1", "returnaddress" => "bleh2", "format" => "json", "data" => Base64.encode64(data.to_json) },
+              headers: {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'Content-Length'=>'91', 'Content-Type'=>'application/x-www-form-urlencoded', 'User-Agent'=>'Ruby'}).
          to_return(status: 200, body: json_data("mailing_create"), headers: {})
 
       subject.mail
@@ -69,8 +69,8 @@ describe Stampr::Mailing do
       subject = described_class.new batch_id: 2, address: "bleh1", returnaddress: "bleh2", data: data
 
       request = stub_request(:post, "https://user:pass@testing.dev.stam.pr/api/mailings").
-         with(body: {"batch_id"=>"2", "address" => "bleh1", "returnaddress" => "bleh2", "format" => "html", "data" => data},
-              headers: {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'Content-Length'=>'99', 'Content-Type'=>'application/x-www-form-urlencoded', 'User-Agent'=>'Ruby'}).
+         with(body: {"batch_id"=>"2", "address" => "bleh1", "returnaddress" => "bleh2", "format" => "html", "data" => Base64.encode64(data) },
+              headers: {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'Content-Length'=>'107', 'Content-Type'=>'application/x-www-form-urlencoded', 'User-Agent'=>'Ruby'}).
          to_return(status: 200, body: json_data("mailing_create"), headers: {})
 
       subject.mail
@@ -84,8 +84,8 @@ describe Stampr::Mailing do
       subject = described_class.new batch_id: 2, address: "bleh1", returnaddress: "bleh2", data: data
 
       request = stub_request(:post, "https://user:pass@testing.dev.stam.pr/api/mailings").
-         with(body: {"batch_id"=>"2", "address" => "bleh1", "returnaddress" => "bleh2", "format" => "pdf", "data" => data},
-              headers: {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'Content-Length'=>'73', 'Content-Type'=>'application/x-www-form-urlencoded', 'User-Agent'=>'Ruby'}).
+         with(body: {"batch_id"=>"2", "address" => "bleh1", "returnaddress" => "bleh2", "format" => "pdf", "data" => Base64.encode64(data) },
+              headers: {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'Content-Length'=>'84', 'Content-Type'=>'application/x-www-form-urlencoded', 'User-Agent'=>'Ruby'}).
          to_return(status: 200, body: json_data("mailing_create"), headers: {})
 
       subject.mail

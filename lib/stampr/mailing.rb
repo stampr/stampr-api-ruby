@@ -1,3 +1,5 @@
+require 'base64'
+
 module Stampr
   # An individual piece of mail, within a Stampr::Batch
   class Mailing
@@ -43,7 +45,18 @@ module Stampr
 
       self.address = options[:address] || nil
       self.return_address = options[:return_address] || options[:returnaddress] || nil
-      self.data = options[:data] || nil
+
+      # Decode the data if it has been recieved through a query. Not if the user set it.
+      self.data = if options.key? :data
+        if options.key :batch_id
+          Base64.decode64 options[:data]
+        else
+          options[:data]
+        end
+      else
+        nil
+      end
+
       @id = options[:mailing_id] || nil
 
       if block_given?
@@ -128,11 +141,9 @@ module Stampr
 
       case format
       when :json
-        params[:data] = data.to_json
-      when :html
-         params[:data] = data
-      when :pdf
-        params[:data] = data # TODO: encode this? Base64?
+        params[:data] = Base64.encode64 data.to_json
+      when :html, :pdf
+         params[:data] = Base64.encode64 data
       end
 
       result = Stampr.client.post "mailings", params
