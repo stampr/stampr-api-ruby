@@ -20,7 +20,7 @@ module Stampr
       #   Get the batches between two times.
       #
       #   @param time_period [Range<Time/DateTime>] Time period to get mailings for.
-      #   @options :status [:processing, :hold, :archive] Status of batch to find.
+      #   @option options :status [:processing, :hold, :archive] Status of batch to find.
       #   @return [Array<Stampr::Batch>]
       def [](*args)
         case args[0]

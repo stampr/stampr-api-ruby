@@ -18,10 +18,14 @@ module Stampr
       #   @return [Stampr::Mailing]
       #
       # @overload [](time_period, options = {})
-      #   Get the mailing between two times.
+      #   Get the mailing between two times, optionally only with a specific
+      #   status and/or in a specific batch (:batch OR :batch_id option should be used)
       #
       #   @param time_period [Range<Time/DateTime>] Time period to get mailings for.
-      #   @options :status [:processing, :hold, :archive] Status of mailings to find.
+      #   @option options :status [:processing, :hold, :archive] Status of mailings to find.
+      #   @option options :batch_id [Integer] ID of batch to retrieve mailings from.
+      #   @option options :batch [Stampr::Batch] Batch to retrieve mailings from.
+      #
       #   @return [Array<Stampr::Mailing>]
       def [](*args)
         case args[0]
@@ -57,26 +61,53 @@ module Stampr
             raise TypeError, "Can only use a range of Time/DateTime"
           end
 
-          search = if options.key? :status
-            unless options[:status].is_a? Symbol
+          status, batch_id, batch = options[:status], options[:batch_id], options[:batch]
+
+          if status
+            unless status.is_a? Symbol
               raise TypeError, ":status option should be one of #{Batch::STATUSES.map(&:inspect).join ", "}" 
             end
 
-            unless Batch::STATUSES.include? options[:status]
+            unless Batch::STATUSES.include? status
               raise ArgumentError, ":status option should be one of #{Batch::STATUSES.map(&:inspect).join ", "}" 
             end
-
-            ["with", options[:status]]      
-          else
-            ["browse"]   
           end
+
+          if batch and batch_id
+            raise ArgumentError, "Expected :batch OR :batch_id options"
+          end
+
+          if batch_id
+            unless batch_id.is_a? Integer and batch_id > 0
+              raise TypeError, ":status option should be a positive Integer" 
+            end
+          end
+
+          if batch
+            unless batch.is_a? Batch
+              raise TypeError, ":batch option should be a Stampr::Batch" 
+            end
+
+            batch_id = batch.id
+          end
+
+          search = if batch_id and status
+            ["batches", batch_id, "with", status]
+          elsif batch_id
+            ["batches", batch_id, "browse"]
+          elsif status
+            ["mailings", "with", status]      
+          else
+            ["mailings", "browse"]   
+          end
+
+          search += [from.to_time.utc.iso8601, to.to_time.utc.iso8601]
 
           all_mailings = []
           i = 0
 
           loop do
-            mailings = Stampr.client.get ["mailings", *search,
-                from.to_time.utc.iso8601, to.to_time.utc.iso8601, i]
+            mailings = Stampr.client.get (search + [i])
 
             break if mailings.empty?
 
