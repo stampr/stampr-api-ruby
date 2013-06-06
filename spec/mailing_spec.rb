@@ -150,24 +150,30 @@ describe Stampr::Mailing do
   describe ".[]" do
     let(:batch) { Stampr::Batch.new batch_id: 99, config_id: 12 }
 
-    context "with id" do
-      it "should retreive a specific mailing" do
-        request = stub_request(:get, "https://user:pass@testing.dev.stam.pr/api/mailings/1").
-           with(headers: {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'User-Agent'=>'Ruby'}).
-           to_return(status: 200, body: json_data("mailing_index"), headers: {})
+    it "should retreive a specific mailing" do
+      request = stub_request(:get, "https://user:pass@testing.dev.stam.pr/api/mailings/1").
+         with(headers: {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'User-Agent'=>'Ruby'}).
+         to_return(status: 200, body: json_data("mailing_index"), headers: {})
 
-        mailing = Stampr::Mailing[1]
+      mailing = Stampr::Mailing[1]
 
-        mailing.id.should eq 1
-        mailing.status.should eq :received
+      mailing.id.should eq 1
+      mailing.status.should eq :received
 
-        request.should have_been_made
-      end
-
-      it "should fail with a negative id" do
-        -> { Stampr::Mailing[-1] }.should raise_error(TypeError, "id should be a positive Integer")
-      end
+      request.should have_been_made
     end
+
+    it "should fail with a negative id" do
+      -> { Stampr::Mailing[-1] }.should raise_error(TypeError, "id should be a positive Integer")
+    end
+
+        it "should fail with a bad index" do
+      -> { Stampr::Mailing["fred"] }.should raise_error(TypeError, "id should be a positive Integer")
+    end
+  end
+
+  describe ".browse" do
+    let(:batch) { Stampr::Batch.new batch_id: 99, config_id: 12 }
 
     context "with range" do
       [Time, DateTime].each do |period_class|
@@ -179,7 +185,7 @@ describe Stampr::Mailing do
           end
 
           from, to = period_class.new(1900, 1, 1, 0, 0, 0, "+00:00"), period_class.new(2000, 1, 1, 0, 0, 0, "+00:00")
-          mailings = Stampr::Mailing[from..to]
+          mailings = Stampr::Mailing.browse from..to
 
           mailings.map(&:id).should eq [1, 2, 3]
 
@@ -188,7 +194,11 @@ describe Stampr::Mailing do
       end
 
       it "should fail with a bad range" do
-        -> { Stampr::Mailing[1..3] }.should raise_error(TypeError, "Can only use a range of Time/DateTime")
+        -> { Stampr::Mailing.browse 1..3 }.should raise_error(TypeError, "period should be a Range of Time/DateTime")
+      end
+
+      it "should fail with a bad range type" do
+        -> { Stampr::Mailing.browse 4 }.should raise_error(TypeError, "period should be a Range of Time/DateTime")
       end
     end
 
@@ -202,7 +212,7 @@ describe Stampr::Mailing do
           end
 
           from, to = period_class.new(1900, 1, 1, 0, 0, 0, "+00:00"), period_class.new(2000, 1, 1, 0, 0, 0, "+00:00")
-          mailings = Stampr::Mailing[from..to, batch: batch]
+          mailings = Stampr::Mailing.browse from..to, batch: batch
 
           mailings.map(&:id).should eq [1, 2, 3]
 
@@ -211,11 +221,11 @@ describe Stampr::Mailing do
       end
 
       it "should fail with a bad batch" do
-        -> { Stampr::Mailing[Time.new(1900, 1, 1, 0, 0, 0, "+00:00")..Time.new(2000, 1, 1, 0, 0, 0, "+00:00"), batch: -1] }.should raise_error(TypeError, ":batch option should be a Stampr::Batch")
+        -> { Stampr::Mailing.browse Time.new(1900, 1, 1, 0, 0, 0, "+00:00")..Time.new(2000, 1, 1, 0, 0, 0, "+00:00"), batch: -1 }.should raise_error(TypeError, ":batch option should be a Stampr::Batch")
       end
 
       it "should fail with a bad range" do
-        -> { Stampr::Mailing[1..3, batch: batch] }.should raise_error(TypeError, "Can only use a range of Time/DateTime")
+        -> { Stampr::Mailing.browse 1..3, batch: batch }.should raise_error(TypeError, "period should be a Range of Time/DateTime")
       end
     end
 
@@ -229,7 +239,7 @@ describe Stampr::Mailing do
           end
 
           from, to = period_class.new(1900, 1, 1, 0, 0, 0, "+00:00"), period_class.new(2000, 1, 1, 0, 0, 0, "+00:00")
-          mailings = Stampr::Mailing[from..to, status: :processing]
+          mailings = Stampr::Mailing.browse from..to, status: :processing
 
           mailings.map(&:id).should eq [1, 2, 3]
 
@@ -238,15 +248,17 @@ describe Stampr::Mailing do
       end
 
       it "should fail with a bad status type" do
-        -> { Stampr::Mailing[Time.new(1900, 1, 1, 0, 0, 0, "+00:00")..Time.new(2000, 1, 1, 0, 0, 0, "+00:00"), status: 12] }.should raise_error(TypeError, ":status option should be one of :received, :render, :error, :queued, :assigned, :processing, :printed, :shipped")
+        period = Time.new(1900, 1, 1, 0, 0, 0, "+00:00")..Time.new(2000, 1, 1, 0, 0, 0, "+00:00")
+        -> { Stampr::Mailing.browse period, status: 12 }.should raise_error(TypeError, ":status option should be one of :received, :render, :error, :queued, :assigned, :processing, :printed, :shipped")
       end
 
       it "should fail with a bad status symbol" do
-        -> { Stampr::Mailing[Time.new(1900, 1, 1, 0, 0, 0, "+00:00")..Time.new(2000, 1, 1, 0, 0, 0, "+00:00"), status: :frog] }.should raise_error(ArgumentError, ":status option should be one of :received, :render, :error, :queued, :assigned, :processing, :printed, :shipped")
+        period = Time.new(1900, 1, 1, 0, 0, 0, "+00:00")..Time.new(2000, 1, 1, 0, 0, 0, "+00:00")
+        -> { Stampr::Mailing.browse period, status: :frog }.should raise_error(ArgumentError, ":status option should be one of :received, :render, :error, :queued, :assigned, :processing, :printed, :shipped")
       end
 
       it "should fail with a bad range" do
-        -> { Stampr::Mailing[1..3, status: :processing] }.should raise_error(TypeError, "Can only use a range of Time/DateTime")
+        -> { Stampr::Mailing.browse 1..3, status: :processing }.should raise_error(TypeError, "period should be a Range of Time/DateTime")
       end
     end
 
@@ -260,17 +272,13 @@ describe Stampr::Mailing do
           end
 
           from, to = period_class.new(1900, 1, 1, 0, 0, 0, "+00:00"), period_class.new(2000, 1, 1, 0, 0, 0, "+00:00")
-          mailings = Stampr::Mailing[from..to, status: :processing, batch: batch]
+          mailings = Stampr::Mailing.browse from..to, status: :processing, batch: batch
 
           mailings.map(&:id).should eq [1, 2, 3]
 
           requests.each {|request| request.should have_been_made }
         end
       end
-    end
-
-    it "should fail with a bad index" do
-      -> { Stampr::Mailing["fred"] }.should raise_error(TypeError, "index must be a positive Integer or Time/DateTime range")
     end
   end
 end

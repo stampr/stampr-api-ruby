@@ -182,24 +182,29 @@ describe Stampr::Batch do
 
 
   describe ".[]" do
-    context "with id" do
-      it "should retreive a specific batch" do
-        request = stub_request(:get, "https://user:pass@testing.dev.stam.pr/api/batches/1").
-           with(headers: {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'User-Agent'=>'Ruby'}).
-           to_return(status: 200, body: json_data("batch_index"), headers: {})
+    it "should retreive a specific batch" do
+      request = stub_request(:get, "https://user:pass@testing.dev.stam.pr/api/batches/1").
+         with(headers: {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'User-Agent'=>'Ruby'}).
+         to_return(status: 200, body: json_data("batch_index"), headers: {})
 
-        batch = Stampr::Batch[1]
+      batch = Stampr::Batch[1]
 
-        batch.id.should eq 2
+      batch.id.should eq 2
 
-        request.should have_been_made
-      end
-
-      it "should fail with a negative id" do
-        -> { Stampr::Batch[-1] }.should raise_error(TypeError, "id should be a positive Integer")
-      end
+      request.should have_been_made
     end
 
+    it "should fail with a negative id" do
+      -> { Stampr::Batch[-1] }.should raise_error(TypeError, "id should be a positive Integer")
+    end
+
+    it "should fail with a bad id" do
+      -> { Stampr::Batch["fred"] }.should raise_error(TypeError, "id should be a positive Integer")
+    end
+  end
+
+
+  describe ".browse" do
     context "with range" do
       [Time, DateTime].each do |period_class|
         it "should retrieve a list over a #{period_class} period" do
@@ -210,7 +215,7 @@ describe Stampr::Batch do
           end
 
           from, to = period_class.new(1900, 1, 1, 0, 0, 0, "+00:00"), period_class.new(2000, 1, 1, 0, 0, 0, "+00:00")
-          batches = Stampr::Batch[from..to]
+          batches = Stampr::Batch.browse from..to
 
           batches.map(&:id).should eq [2, 3, 4]
 
@@ -218,8 +223,12 @@ describe Stampr::Batch do
         end
       end
 
-      it "should fail with a bad range" do
-        -> { Stampr::Batch[1..3] }.should raise_error(TypeError, "Can only use a range of Time/DateTime")
+      it "should fail with a bad period range" do
+        -> { Stampr::Batch.browse 1..3 }.should raise_error(TypeError, "period should be a Range of Time/DateTime")
+      end
+
+      it "should fail with a bad period type" do
+        -> { Stampr::Batch.browse 12 }.should raise_error(TypeError, "period should be a Range of Time/DateTime")
       end
     end
 
@@ -233,7 +242,7 @@ describe Stampr::Batch do
           end
 
           from, to = period_class.new(1900, 1, 1, 0, 0, 0, "+00:00"), period_class.new(2000, 1, 1, 0, 0, 0, "+00:00")
-          batches = Stampr::Batch[from..to, status: :processing]
+          batches = Stampr::Batch.browse from..to, status: :processing
 
           batches.map(&:id).should eq [2, 3, 4]
 
@@ -241,20 +250,18 @@ describe Stampr::Batch do
         end
       end
 
-    it "should fail with a bad status" do
-        -> { Stampr::Batch[Time.new(1900, 1, 1, 0, 0, 0, "+00:00")..Time.new(2000, 1, 1, 0, 0, 0, "+00:00"), status: 12] }.should raise_error(TypeError, ":status option should be one of :processing, :hold, :archive")
+      it "should fail with a bad status" do
+        period = Time.new(1900, 1, 1, 0, 0, 0, "+00:00")..Time.new(2000, 1, 1, 0, 0, 0, "+00:00")
+        -> { Stampr::Batch.browse period, status: 12 }.should raise_error(TypeError, ":status option should be one of :processing, :hold, :archive")
       end
       it "should fail with a bad status" do
-        -> { Stampr::Batch[Time.new(1900, 1, 1, 0, 0, 0, "+00:00")..Time.new(2000, 1, 1, 0, 0, 0, "+00:00"), status: :frog] }.should raise_error(ArgumentError, ":status option should be one of :processing, :hold, :archive")
+        period = Time.new(1900, 1, 1, 0, 0, 0, "+00:00")..Time.new(2000, 1, 1, 0, 0, 0, "+00:00")
+        -> { Stampr::Batch.browse period, status: :frog }.should raise_error(ArgumentError, ":status option should be one of :processing, :hold, :archive")
       end
 
       it "should fail with a bad range" do
-        -> { Stampr::Batch[1..3, status: :processing] }.should raise_error(TypeError, "Can only use a range of Time/DateTime")
+        -> { Stampr::Batch.browse 1..3, status: :processing }.should raise_error(TypeError, "period should be a Range of Time/DateTime")
       end
-    end
-
-    it "should fail with a bad index" do
-      -> { Stampr::Batch["fred"] }.should raise_error(TypeError, "index must be a positive Integer or Time/DateTime range")
     end
   end
 

@@ -8,16 +8,16 @@ module Stampr
   # @!attribute [r] batch_id
   #   @return [Integer] The ID of the Batch associated with the mailing.
   #
-  # @!attribute address
+  # @!attribute [rw] address
   #   @return [String] Address to send mail to.
   #
-  # @!attribute return_address
+  # @!attribute [rw] return_address
   #   @return [String] Return address for mail
   #
   # @!attribute [r] format
   #   @return [String] Format of the data
   #
-  # @!attribute data
+  # @!attribute [rw] data
   #   @return [String, Hash] PDF data string, HTML document string, or key/value hash (for mail merge)
   #
   # @!attribute [r] status
@@ -30,122 +30,101 @@ module Stampr
     attr_accessor :address, :return_address, :format, :data, :batch_id, :status
 
     class << self
-      # Access a single Mailing or all mailings over a range of time.
+      # Get the mailing with the specific ID.
       #
-      # @overload [](id)
-      #   Get the mailing with the specific ID.
+      # @example
+      #   mailing = Stampr::Mailing[123123]
       #
-      #   @example
-      #     mailing = Stampr::Mailing[123123]
+      # @param id [Integer] ID of mailing to retreive.
       #
-      #   @param id [Integer] ID of mailing to retreive.
+      # @return [Stampr::Mailing]
+      def [](id)
+        unless id.is_a?(Integer) && id > 0
+          raise TypeError, "id should be a positive Integer" 
+        end
+
+        mailings = Stampr.client.get ["mailings", id]
+        mailing = mailings.first
+
+        self.new symbolize_hash_keys(mailing)
+      end
+      
+
+      # Get the mailing between two times, optionally only with a specific
+      # status and/or in a specific batch (:batch OR :batch_id option should be used)
       #
-      #   @return [Stampr::Mailing]
+      # @example
+      #   time_period = Time.new(2012, 1, 1, 0, 0, 0)..Time.now
+      #   my_batch = Stampr::Batch[1234]
       #
-      # @overload [](time_period, options = {})
-      #   Get the mailing between two times, optionally only with a specific
-      #   status and/or in a specific batch (:batch OR :batch_id option should be used)
+      #   mailings = Stampr::Mailing[time_period]
+      #   mailings = Stampr::Mailing[time_period, status: :processing]
+      #   mailings = Stampr::Mailing[time_period, batch: my_batch]
+      #   mailings = Stampr::Mailing[time_period, status: :processing, batch: my_batch]
       #
-      #   @example
-      #     time_period = Time.new(2012, 1, 1, 0, 0, 0)..Time.now
-      #     my_batch = Stampr::Batch[1234]
+      # @param period [Range<Time/DateTime>] Time period to get mailings for.
+      # @option options :status [:received :render, :error, :queued, :assigned, :processing, :printed, :shipped] Status of mailings to find.
+      # @option options :batch [Stampr::Batch] Batch to retrieve mailings from.
       #
-      #     mailings = Stampr::Mailing[time_period]
-      #     mailings = Stampr::Mailing[time_period, status: :processing]
-      #     mailings = Stampr::Mailing[time_period, batch: my_batch]
-      #     mailings = Stampr::Mailing[time_period, status: :processing, batch: my_batch]
-      #
-      #   @param time_period [Range<Time/DateTime>] Time period to get mailings for.
-      #   @option options :status [:received :render, :error, :queued, :assigned, :processing, :printed, :shipped] Status of mailings to find.
-      #   @option options :batch [Stampr::Batch] Batch to retrieve mailings from.
-      #
-      #   @return [Array<Stampr::Mailing>]
-      def [](*args)
-        case args[0]
-        when Integer
-          unless args.size == 1
-            raise ArgumentError, "Only expected a single argument when searching by ID" 
+      # @return [Array<Stampr::Mailing>]
+      def browse(period, options = {})
+        unless period.is_a? Range
+          raise TypeError, "period should be a Range of Time/DateTime"
+        end
+
+        from, to = period.first, period.last
+        unless from.respond_to? :to_time and to.respond_to? :to_time
+          raise TypeError, "period should be a Range of Time/DateTime"
+        end
+
+        status, batch = options[:status], options[:batch]
+
+        if status
+          unless status.is_a? Symbol
+            raise TypeError, ":status option should be one of #{STATUSES.map(&:inspect).join ", "}" 
           end
 
-          id = args[0]
+          unless STATUSES.include? status
+            raise ArgumentError, ":status option should be one of #{STATUSES.map(&:inspect).join ", "}" 
+          end
+        end
 
-          unless id.is_a?(Integer) && id > 0
-            raise TypeError, "id should be a positive Integer" 
+        batch_id = if batch
+          unless batch.is_a? Stampr::Batch
+            raise TypeError, ":batch option should be a Stampr::Batch" 
           end
 
-          mailings = Stampr.client.get ["mailings", id]
-          mailing = mailings.first
-          self.new symbolize_hash_keys(mailing)
-
-        when Range
-          unless args.size.between? 1, 2
-            raise ArgumentError, "Expected one or two arguments when searching over time period"
-          end
-
-          range = args[0]
-          options = args[1] || {}
-
-          unless options.nil? or options.is_a? Hash
-            raise TypeError, "options, if present, should be a Hash" 
-          end
-
-          from, to = range.first, range.last
-          unless from.respond_to? :to_time and to.respond_to? :to_time
-            raise TypeError, "Can only use a range of Time/DateTime"
-          end
-
-          status, batch = options[:status], options[:batch]
-
-          if status
-            unless status.is_a? Symbol
-              raise TypeError, ":status option should be one of #{STATUSES.map(&:inspect).join ", "}" 
-            end
-
-            unless STATUSES.include? status
-              raise ArgumentError, ":status option should be one of #{STATUSES.map(&:inspect).join ", "}" 
-            end
-          end
-
-          batch_id = if batch
-            unless batch.is_a? Stampr::Batch
-              raise TypeError, ":batch option should be a Stampr::Batch" 
-            end
-
-            batch.id
-          else
-            nil
-          end
-
-          search = if batch_id and status
-            ["batches", batch_id, "with", status]
-          elsif batch_id
-            ["batches", batch_id, "browse"]
-          elsif status
-            ["mailings", "with", status]      
-          else
-            ["mailings", "browse"]   
-          end
-
-          search += [from.to_time.utc.iso8601, to.to_time.utc.iso8601]
-
-          all_mailings = []
-          i = 0
-
-          loop do
-            mailings = Stampr.client.get (search + [i])
-
-            break if mailings.empty?
-
-            all_mailings.concat mailings.map {|m| self.new symbolize_hash_keys(m) }
-
-            i += 1
-          end
-
-          all_mailings
-
+          batch.id
         else
-          raise TypeError, "index must be a positive Integer or Time/DateTime range"
-        end     
+          nil
+        end
+
+        search = if batch_id and status
+          ["batches", batch_id, "with", status]
+        elsif batch_id
+          ["batches", batch_id, "browse"]
+        elsif status
+          ["mailings", "with", status]      
+        else
+          ["mailings", "browse"]   
+        end
+
+        search += [from.to_time.utc.iso8601, to.to_time.utc.iso8601]
+
+        all_mailings = []
+        i = 0
+
+        loop do
+          mailings = Stampr.client.get (search + [i])
+
+          break if mailings.empty?
+
+          all_mailings.concat mailings.map {|m| self.new symbolize_hash_keys(m) }
+
+          i += 1
+        end
+
+        all_mailings
       end
     end
 

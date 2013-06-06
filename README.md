@@ -1,11 +1,13 @@
 Stampr
 ======
 
-Wrapper for the Stampr API.
+Ruby wrapper for the Stampr API.
 
 Author: Bil Bas (bil.bas.dev@gmail.com)
 
-Site: https://github.com/stampr/stampr-api-ruby
+Ruby API: https://github.com/stampr/stampr-api-ruby
+
+Stampr: https://stam.pr
 
 License: MIT
 
@@ -85,11 +87,9 @@ Stampr.authenticate "username", "password"
 
 # Config can be shared by batches.
 config = Stampr::Config.new
-config.create
 
 # Batches contain one or more mailings.
 batch = Stampr::Batch.new config: config
-batch.create
 
 mailing1 = Mailing.new batch: batch
 mailing1.address = dest_address_1
@@ -118,8 +118,8 @@ batch = Stampr::Batch[2451]
 
 time_period = Time.new(2012, 1, 1, 0, 0, 0)..Time.now
 
-batches = Stampr::Batch[time_period]
-batches = Stampr::Batch[time_period, status: :processing]
+batches = Stampr::Batch.browse(time_period)
+batches = Stampr::Batch.browse(time_period, status: :processing)
 ```
 
 ### Updating batches
@@ -132,7 +132,8 @@ batch.status = :archive
 ### Deleting batches
 
 ```ruby
-Stampr::Batch[2451].delete
+batch = Stampr::Batch[2451]
+batch.delete
 ```
 
 ### Browsing mailings
@@ -143,16 +144,17 @@ mailing = Stampr::Mailing[123123]
 time_period = Time.new(2012, 1, 1, 0, 0, 0)..Time.now
 my_batch = Stampr::Batch[1234]
 
-mailings = Stampr::Mailing[time_period]
-mailings = Stampr::Mailing[time_period, status: :processing]
-mailings = Stampr::Mailing[time_period, batch: my_batch]
-mailings = Stampr::Mailing[time_period, status: :processing, batch: my_batch]
+mailings = Stampr::Mailing.browse(time_period)
+mailings = Stampr::Mailing.browse(time_period, status: :processing)
+mailings = Stampr::Mailing.browse(time_period, batch: my_batch)
+mailings = Stampr::Mailing.browse(time_period, status: :processing, batch: my_batch)
 ```
 
 ### Deleting mailings
 
 ```ruby
-Stampr::Mailing[2451].delete
+mailing = Stampr::Mailing[2451]
+mailing.delete
 ```
 
 ### Using mail-merge with [Mustache template](http://mustache.github.io/)
