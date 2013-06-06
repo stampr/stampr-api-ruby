@@ -7,7 +7,7 @@ Author: Bil Bas (bil.bas.dev@gmail.com)
 
 Ruby API: https://github.com/stampr/stampr-api-ruby
 
-Stampr: https://stam.pr
+Stampr: http://stam.pr
 
 License: MIT
 
@@ -104,14 +104,18 @@ mailing2.data = data2
 mailing2.mail
 ```
 
-### Browsing configs
+### Config
+
+Browsing:
 
 ```ruby
 config = Stampr::Config[123123]
 configs = Stampr::Config.all
 ```
 
-### Browsing batches
+### Batch
+
+Browsing:
 
 ```ruby
 batch = Stampr::Batch[2451]
@@ -122,21 +126,23 @@ batches = Stampr::Batch.browse(time_period)
 batches = Stampr::Batch.browse(time_period, status: :processing)
 ```
 
-### Updating batches
+Updating:
 
 ```ruby
 batch = Stampr::Batch[2451]
 batch.status = :archive
 ```
 
-### Deleting batches
+Deleting:
 
 ```ruby
 batch = Stampr::Batch[2451]
 batch.delete
 ```
 
-### Browsing mailings
+### Mailing
+
+Browsing:
 
 ```ruby
 mailing = Stampr::Mailing[123123]
@@ -150,7 +156,16 @@ mailings = Stampr::Mailing.browse(time_period, batch: my_batch)
 mailings = Stampr::Mailing.browse(time_period, status: :processing, batch: my_batch)
 ```
 
-### Deleting mailings
+Syncing current status:
+
+```ruby
+mailing = Stampr::Mailing[2451]
+mailing.status #=> :received
+mailing.sync
+mailing.status #=> :render
+```
+
+Deleting:
 
 ```ruby
 mailing = Stampr::Mailing[2451]

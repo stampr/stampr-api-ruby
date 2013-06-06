@@ -211,6 +211,27 @@ describe Stampr::Mailing do
   end
 
 
+  describe "#sync" do
+    it "should update the status from the server" do
+      data = json_data("mailing_create")
+      data['"received"'] = '"render"'
+
+      stub_request(:get, "https://user:pass@testing.dev.stam.pr/api/mailings/#{created.id}").
+         with(:headers => {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'User-Agent'=>'Ruby'}).
+         to_return(:status => 200, :body => data, :headers => {})
+
+      created.instance_variable_set :@status, :received 
+      created.status.should eq :received 
+      created.sync
+      created.status.should eq :render
+    end
+
+    it "should fail if the Mailing hasn't been created" do
+      -> { uncreated.sync }.should raise_error(Stampr::APIError, "can't sync before creation")
+    end
+  end
+
+
   describe ".[]" do
     let(:batch) { Stampr::Batch.new batch_id: 99, config_id: 12 }
 

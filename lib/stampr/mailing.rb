@@ -299,13 +299,23 @@ module Stampr
     #
     # @return [nil]
     def delete
-      raise APIError, "Can't #delete before #create" unless @id
+      raise APIError, "Can't #delete before #create" unless created?
 
       id, @id = @id, nil
 
       Stampr.client.delete ["mailings", id]
 
       nil
+    end
+
+    # Update the value of status from the server.
+    def sync
+      raise APIError, "can't sync before creation" unless created?
+
+      mailing = Stampr.client.get ["mailings", id]
+      @status = mailing["status"].to_sym
+
+      self
     end
   end
 end

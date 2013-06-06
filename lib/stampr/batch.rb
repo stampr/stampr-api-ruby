@@ -180,7 +180,7 @@ module Stampr
     #
     # @return [nil]
     def delete
-      raise APIError, "Can't #delete before #create" unless @id
+      raise APIError, "Can't #delete before #create" unless created?
 
       id, @id = @id, nil
 
