@@ -10,7 +10,7 @@ module Stampr
   # @!attribute [rw] status
   #   @return [:processing, :hold, :archive] Status of the mailings in the Batch.
   class Batch
-    extend Utilities
+    include Utilities
 
     STATUSES = [:processing, :hold, :archive]
     DEFAULT_STATUS = :processing
@@ -87,6 +87,8 @@ module Stampr
       end
     end
 
+    # Has the Batch been created already?
+    def created?; !@id.nil?; end
 
     # If neither :config_id or :config options are provided, then a new, default, config will be applied to this batch.
     #
@@ -112,23 +114,26 @@ module Stampr
         @config.id
       end
 
-      @id = options[:batch_id] || nil
       self.template = options[:template]
       self.status = (options[:status] || DEFAULT_STATUS).to_sym
+
+      @id = options[:batch_id] || nil
 
       yield self if block_given?
     end
 
 
     def template=(value)
+      raise ReadOnlyError, :template if created?
+
       raise TypeError, "template must be a String" unless value.nil? || value.is_a?(String)
 
       @template = value
     end
 
     def status=(value)
-      raise TypeError, "status must be a Symbol" unless value.is_a? Symbol
-      raise ArgumentError, "status must be one of: #{STATUSES.map(&:inspect).join(", ")}" unless STATUSES.include? value
+      raise TypeError, bad_attribute(:status, STATUSES) unless value.is_a? Symbol
+      raise ArgumentError, bad_attribute(:status, STATUSES) unless STATUSES.include? value
 
       # If we have already been created, update the status.
       if @id and not @status.nil? and @status != value

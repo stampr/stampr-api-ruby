@@ -72,6 +72,100 @@ describe Stampr::Config do
     end
   end
 
+  let(:uncreated) { Stampr::Config.new }
+  let(:created) { Stampr::Config.new config_id: 1 }
+  
+  describe "#style=" do
+    it "should set the value" do
+      uncreated.style = :color
+      uncreated.style.should eq :color
+    end
+
+    it "should fail with a bad type" do
+      -> { uncreated.style = 12 }.should raise_error(TypeError, "style must be one of :color")
+    end
+
+    it "should fail with a bad value" do
+      -> { uncreated.style = :fish }.should raise_error(ArgumentError, "style must be one of :color")
+    end
+
+    it "should fail if the Config is already created" do
+      -> { created.style = "hello" }.should raise_error(Stampr::ReadOnlyError, "can't modify attribute: style")
+    end
+  end
+
+  describe "#turnaround=" do
+    it "should set the value" do
+      uncreated.turnaround = :threeday
+      uncreated.turnaround.should eq :threeday
+    end
+
+    it "should fail with a bad type" do
+      -> { uncreated.turnaround = 12 }.should raise_error(TypeError, "turnaround must be one of :threeday")
+    end
+
+    it "should fail with a bad value" do
+      -> { uncreated.turnaround = :fish }.should raise_error(ArgumentError, "turnaround must be one of :threeday")
+    end
+
+    it "should fail if the Config is already created" do
+      -> { created.turnaround = "hello" }.should raise_error(Stampr::ReadOnlyError, "can't modify attribute: turnaround")
+    end
+  end
+
+  describe "#output=" do
+    it "should set the value" do
+      uncreated.output = :single
+      uncreated.output.should eq :single
+    end
+
+    it "should fail with a bad type" do
+      -> { uncreated.output = 12 }.should raise_error(TypeError, "output must be one of :single")
+    end
+
+    it "should fail with a bad value" do
+      -> { uncreated.output = :fish }.should raise_error(ArgumentError, "output must be one of :single")
+    end
+
+    it "should fail if the Config is already created" do
+      -> { created.output = "hello" }.should raise_error(Stampr::ReadOnlyError, "can't modify attribute: output")
+    end
+  end
+
+  describe "#size=" do
+    it "should set the value" do
+      uncreated.size = :standard
+      uncreated.size.should eq :standard
+    end
+
+    it "should fail with a bad type" do
+      -> { uncreated.size = 12 }.should raise_error(TypeError, "size must be one of :standard")
+    end
+
+    it "should fail with a bad value" do
+      -> { uncreated.size = :fish }.should raise_error(ArgumentError, "size must be one of :standard")
+    end
+
+    it "should fail if the Config is already created" do
+      -> { created.size = "hello" }.should raise_error(Stampr::ReadOnlyError, "can't modify attribute: size")
+    end
+  end
+
+  describe "#return_envelope=" do
+    it "should set the value" do
+      uncreated.return_envelope = true
+      uncreated.return_envelope.should be_true
+    end
+
+    it "should fail with a bad type" do
+      -> { uncreated.return_envelope = 12 }.should raise_error(TypeError, "return_envelope must be one of true, false")
+    end
+
+    it "should fail if the Config is already created" do
+      -> { created.return_envelope = "hello" }.should raise_error(Stampr::ReadOnlyError, "can't modify attribute: return_envelope")
+    end
+  end
+
 
   describe "#create" do
     it "should post a creation request" do

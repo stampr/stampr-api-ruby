@@ -20,7 +20,7 @@ describe Stampr::Mailing do
     end
 
     it "should fail with bad data" do
-      ->{ described_class.new batch_id: 2, data: 12 }.should raise_error(TypeError, "Bad format for data")
+      ->{ described_class.new batch_id: 2, data: 12 }.should raise_error(TypeError, "bad format for data")
     end
 
     it "should succeed with a good MD5" do
@@ -143,6 +143,70 @@ describe Stampr::Mailing do
       subject = described_class.new batch_id: 2
 
       -> { subject.delete }.should raise_error Stampr::APIError, "Can't #delete before #create"
+    end
+  end
+
+  let(:uncreated) { Stampr::Mailing.new batch_id: 1 }
+  let(:created) { Stampr::Mailing.new mailing_id: 2, batch_id: 1}
+  
+
+  describe "#address=" do
+    it "should set the value" do
+      uncreated.address = "hello"
+      uncreated.address.should eq "hello"
+    end
+
+    it "should accept nil" do
+      uncreated.address = nil
+      uncreated.address.should be_nil
+    end
+
+    it "should fail with a bad type" do
+      -> { uncreated.address = 12 }.should raise_error(TypeError, "address must be a String")
+    end
+
+    it "should fail if the Mailing is already created" do
+      -> { created.address = "hello" }.should raise_error(Stampr::ReadOnlyError, "can't modify attribute: address")
+    end
+  end
+
+  describe "#return_address=" do
+    it "should set the value" do
+      uncreated.return_address = "hello"
+      uncreated.return_address.should eq "hello"
+    end
+
+    it "should accept nil" do
+      uncreated.return_address = nil
+      uncreated.return_address.should be_nil
+    end
+
+    it "should fail with a bad type" do
+      -> { uncreated.return_address = 12 }.should raise_error(TypeError, "return_address must be a String")
+    end
+
+    it "should fail if the Mailing is already created" do
+      -> { created.return_address = "hello" }.should raise_error(Stampr::ReadOnlyError, "can't modify attribute: return_address")
+    end
+  end
+
+  describe "#data=" do
+    it "should set the value" do
+      uncreated.data = "hello"
+      uncreated.data.should eq "hello"
+    end
+
+    it "should accept nil" do
+      uncreated.data = nil
+      uncreated.data.should be_nil
+    end
+
+    it "should fail with a bad type" do
+      -> { uncreated.data = 12 }.should raise_error(TypeError, "bad format for data")
+    end
+
+    it "should fail if the Mailing is already created" do
+      -> { created.data = "hello" }.should raise_error(Stampr::ReadOnlyError, "can't modify attribute: data")
     end
   end
 

@@ -23,11 +23,11 @@ module Stampr
   # @!attribute [r] status
   #   @return [nil, :received, :render, :error, :queued, :assigned, :processing, :printed, :shipped] Status of the mailing (nil before it is sent).
   class Mailing
-    extend Utilities
+    include Utilities
 
     STATUSES = [:received, :render, :error, :queued, :assigned, :processing, :printed, :shipped]
 
-    attr_accessor :address, :return_address, :format, :data, :batch_id, :status
+    attr_reader :address, :return_address, :format, :data, :batch_id, :status
 
     class << self
       # Get the mailing with the specific ID.
@@ -128,6 +128,8 @@ module Stampr
       end
     end
 
+    # Has the Batch been created already?
+    def created?; !@id.nil?; end
 
     # @option options :batch [Stampr::Batch]
     # @option options :address [String]
@@ -194,7 +196,10 @@ module Stampr
       end
     end
 
+
     def address=(value)
+      raise ReadOnlyError, :address if created?
+
       unless value.nil? or value.is_a? String
         raise TypeError, "address must be a String"
       end
@@ -202,7 +207,10 @@ module Stampr
       @address = value
     end
 
+
     def return_address=(value)
+      raise ReadOnlyError, :return_address if created?
+
       unless value.nil? or value.is_a? String
         raise TypeError, "return_address must be a String" 
       end
@@ -210,7 +218,10 @@ module Stampr
       @return_address = value
     end
 
+
     def data=(value)
+      raise ReadOnlyError, :data if created?
+
       old_data, @data = @data, value
       begin
         format # Just read format to check that the format is good.
@@ -243,7 +254,7 @@ module Stampr
       when NilClass
         :none
       else
-        raise TypeError, "Bad format for data"
+        raise TypeError, "bad format for data"
       end
     end
 

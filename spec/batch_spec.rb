@@ -8,6 +8,9 @@ describe Stampr::Batch do
 
   let(:batch_create) { Hash[JSON.parse(json_data("batch_create")).map {|k, v| [k.to_sym, v]}] }
 
+  let(:uncreated) { Stampr::Batch.new config_id: 1 }
+  let(:created) { Stampr::Batch.new batch_id: 2, config_id: 1}
+
   describe "#initialize" do
     it "should generate a Config if it isn't included" do
       Stampr::Config.should_receive(:new).with().and_return(mock(id: 7))
@@ -66,42 +69,41 @@ describe Stampr::Batch do
     end
   end
 
-
   describe "#template=" do
-    let(:subject) { described_class.new config_id: 1 }
-
-    it "should accept a string" do
-      subject.template = "fish"
-      subject.template.should eq "fish"
+    it "should set the value" do
+      uncreated.template = "hello"
+      uncreated.template.should eq "hello"
     end
 
     it "should accept nil" do
-      subject.template = nil
-      subject.template.should be_nil
+      uncreated.template = nil
+      uncreated.template.should be_nil
     end
 
-    it "should refuse other data" do
-      -> { subject.template = 14 }.should raise_error(TypeError, "template must be a String")
+    it "should fail with a bad type" do
+      -> { uncreated.template = 12 }.should raise_error(TypeError, "template must be a String")
+    end
+
+    it "should fail if the Batch is already created" do
+      -> { created.template = "hello" }.should raise_error(Stampr::ReadOnlyError, "can't modify attribute: template")
     end
   end
 
 
   describe "#status=" do
     context "not yet created" do
-      let(:subject) { described_class.new config_id: 1 }
-
       it "should accept a correct symbol" do
-        subject.status.should eq :processing # The default.
-        subject.status = :hold
-        subject.status.should eq :hold
+        uncreated.status.should eq :processing # The default.
+        uncreated.status = :hold
+        uncreated.status.should eq :hold
       end
 
       it "should refuse incorrect symbols" do
-        -> { subject.status = :frog }.should raise_error(ArgumentError, "status must be one of: :processing, :hold, :archive")
+        -> { uncreated.status = :frog }.should raise_error(ArgumentError, "status must be one of :processing, :hold, :archive")
       end
 
       it "should refuse other data" do
-        -> { subject.status = 14 }.should raise_error(TypeError, "status must be a Symbol")
+        -> { uncreated.status = 14 }.should raise_error(TypeError, "status must be one of :processing, :hold, :archive")
       end
     end
 

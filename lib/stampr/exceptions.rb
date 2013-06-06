@@ -10,4 +10,11 @@ module Stampr
 
   # Problem with interfacing with rules of the API.
   class APIError < Error; end
+
+  # User attempts to alter read-only attribute.
+  class ReadOnlyError < Error
+    def initialize(attribute)
+      super("can't modify attribute: #{attribute}")
+    end
+  end
 end
