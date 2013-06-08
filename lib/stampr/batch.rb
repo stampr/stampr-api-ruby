@@ -26,12 +26,16 @@ module Stampr
       # @param id [Integer] ID of batch to retreive.
       # @return [Stampr::Batch]
       def [](id)
-        unless id.is_a?(Integer) && id > 0
-          raise TypeError, "id should be a positive Integer" 
-        end
+        raise TypeError, "id should be a positive Integer" unless id.is_a? Integer
+        raise ArgumentError, "id should be a positive Integer" unless id > 0
 
         batches = Stampr.client.get ["batches", id]
-        self.new symbolize_hash_keys(batches.first)
+
+        if batches.empty?
+          raise RequestError, "No such batch: #{id}"
+        else
+          self.new symbolize_hash_keys(batches.first)
+        end
       end
 
       # Get the batches between two times.
@@ -151,7 +155,7 @@ module Stampr
     #
     # @return [Integer]
     def id
-      create unless @id
+      create unless created?
       @id
     end
 
@@ -160,7 +164,7 @@ module Stampr
     #
     # @return [Stampr::Config]
     def create
-      return if @id # Don't re-create if it already exists.
+      return if created? # Don't re-create if it already exists.
 
       params = {
           config_id: config_id,

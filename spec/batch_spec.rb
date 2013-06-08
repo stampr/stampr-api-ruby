@@ -197,11 +197,19 @@ describe Stampr::Batch do
     end
 
     it "should fail with a negative id" do
-      -> { Stampr::Batch[-1] }.should raise_error(TypeError, "id should be a positive Integer")
+      -> { Stampr::Batch[-1] }.should raise_error(ArgumentError, "id should be a positive Integer")
     end
 
     it "should fail with a bad id" do
       -> { Stampr::Batch["fred"] }.should raise_error(TypeError, "id should be a positive Integer")
+    end
+
+    it "should fail if the batch doesn't exist" do
+      request = stub_request(:get, "https://user:pass@testing.dev.stam.pr/api/batches/99").
+         with(headers: {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'User-Agent'=>'Ruby'}).
+         to_return(status: 200, body: "[]", headers: {})
+         
+      -> { Stampr::Batch[99] }.should raise_error(Stampr::RequestError, "No such batch: 99")
     end
   end
 

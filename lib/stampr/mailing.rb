@@ -39,14 +39,16 @@ module Stampr
       #
       # @return [Stampr::Mailing]
       def [](id)
-        unless id.is_a?(Integer) && id > 0
-          raise TypeError, "id should be a positive Integer" 
-        end
+        raise TypeError, "id should be a positive Integer" unless id.is_a? Integer
+        raise ArgumentError, "id should be a positive Integer" unless id > 0
 
         mailings = Stampr.client.get ["mailings", id]
-        mailing = mailings.first
 
-        self.new symbolize_hash_keys(mailing)
+        if mailings.empty?
+          raise RequestError, "No such mailing: #{id}"
+        else
+          self.new symbolize_hash_keys(mailings.first)
+        end
       end
       
 
@@ -128,8 +130,8 @@ module Stampr
       end
     end
 
-    # Has the Batch been created already?
-    def created?; !@id.nil?; end
+    # Has the Mailing been mailed already?
+    def mailed?; !@id.nil?; end
 
     # @option options :batch [Stampr::Batch]
     # @option options :address [String]
@@ -198,7 +200,7 @@ module Stampr
 
 
     def address=(value)
-      raise ReadOnlyError, :address if created?
+      raise ReadOnlyError, :address if mailed?
 
       unless value.nil? or value.is_a? String
         raise TypeError, "address must be a String"
@@ -209,7 +211,7 @@ module Stampr
 
 
     def return_address=(value)
-      raise ReadOnlyError, :return_address if created?
+      raise ReadOnlyError, :return_address if mailed?
 
       unless value.nil? or value.is_a? String
         raise TypeError, "return_address must be a String" 
@@ -220,7 +222,7 @@ module Stampr
 
 
     def data=(value)
-      raise ReadOnlyError, :data if created?
+      raise ReadOnlyError, :data if mailed?
 
       old_data, @data = @data, value
       begin
@@ -236,7 +238,7 @@ module Stampr
     #
     # @return [Integer]
     def id
-      mail unless @id
+      mail unless mailed?
       @id
     end
 
@@ -262,7 +264,7 @@ module Stampr
     # Mail the mailing on the server.
     # @return [Stampr::Mailing] self
     def mail
-      raise APIError, "Already mailed" if @id
+      raise APIError, "Already mailed" if mailed?
       
       raise APIError, "address required before mailing" unless address
       raise APIError, "return_address required before mailing" unless return_address
@@ -299,7 +301,7 @@ module Stampr
     #
     # @return [nil]
     def delete
-      raise APIError, "Can't #delete before #create" unless created?
+      raise APIError, "Can't #delete before #create" unless mailed?
 
       id, @id = @id, nil
 
@@ -310,7 +312,7 @@ module Stampr
 
     # Update the value of status from the server.
     def sync
-      raise APIError, "can't sync before creation" unless created?
+      raise APIError, "can't sync before creation" unless mailed?
 
       mailing = Stampr.client.get ["mailings", id]
       @status = mailing["status"].to_sym

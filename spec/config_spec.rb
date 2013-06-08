@@ -195,13 +195,29 @@ describe Stampr::Config do
 
       request.should have_been_made
     end
+
+    it "should fail with a negative id" do
+      -> { Stampr::Config[-1] }.should raise_error(ArgumentError, "id should be a positive Integer")
+    end
+
+    it "should fail with a bad index" do
+      -> { Stampr::Config["fred"] }.should raise_error(TypeError, "id should be a positive Integer")
+    end
+
+    it "should fail if the config doesn't exist" do
+      request = stub_request(:get, "https://user:pass@testing.dev.stam.pr/api/configs/99").
+         with(headers: {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'User-Agent'=>'Ruby'}).
+         to_return(status: 200, body: "[]", headers: {})
+         
+      -> { Stampr::Config[99] }.should raise_error(Stampr::RequestError, "No such config: 99")
+    end
   end
 
 
   describe ".all" do
     it "should get a list of all configs" do
       requests = [0, 1, 2].map do |i|
-        stub_request(:get, "https://user:pass@testing.dev.stam.pr/api/configs/all/#{i}").
+        stub_request(:get, "https://user:pass@testing.dev.stam.pr/api/configs/browse/all/#{i}").
            with(headers: {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'User-Agent'=>'Ruby'}).
            to_return(status: 200, body: json_data("configs_#{i}"), headers: {})
       end

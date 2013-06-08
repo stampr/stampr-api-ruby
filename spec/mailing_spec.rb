@@ -249,11 +249,19 @@ describe Stampr::Mailing do
     end
 
     it "should fail with a negative id" do
-      -> { Stampr::Mailing[-1] }.should raise_error(TypeError, "id should be a positive Integer")
+      -> { Stampr::Mailing[-1] }.should raise_error(ArgumentError, "id should be a positive Integer")
     end
 
-        it "should fail with a bad index" do
+    it "should fail with a bad index" do
       -> { Stampr::Mailing["fred"] }.should raise_error(TypeError, "id should be a positive Integer")
+    end
+
+    it "should fail if the mailing doesn't exist" do
+      request = stub_request(:get, "https://user:pass@testing.dev.stam.pr/api/mailings/99").
+         with(headers: {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'User-Agent'=>'Ruby'}).
+         to_return(status: 200, body: "[]", headers: {})
+         
+      -> { Stampr::Mailing[99] }.should raise_error(Stampr::RequestError, "No such mailing: 99")
     end
   end
 

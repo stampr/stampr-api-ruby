@@ -43,11 +43,16 @@ module Stampr
       #
       # @return [Stampr::Config]
       def [](id)
-        raise TypeError, "Expecting positive Integer" unless id.is_a?(Integer) && id > 0
+        raise TypeError, "id should be a positive Integer" unless id.is_a? Integer
+        raise ArgumentError, "id should be a positive Integer" unless id > 0
 
         configs = Stampr.client.get ["configs", id]
-        config = configs.first
-        self.new symbolize_hash_keys(config)       
+
+        if configs.empty?
+          raise RequestError, "No such config: #{id}"
+        else
+          self.new symbolize_hash_keys(configs.first)
+        end
       end
 
       # Get a list of all configs defined in your Stampr account.
@@ -61,7 +66,7 @@ module Stampr
         i = 0
 
         loop do
-          configs = Stampr.client.get ["configs", "all", i]
+          configs = Stampr.client.get ["configs", "browse", "all", i]
           break if configs.empty?
 
           all_configs.concat configs.map {|c| self.new symbolize_hash_keys(c) }
@@ -143,7 +148,7 @@ module Stampr
     #
     # @return [Integer]
     def id
-      create unless @id
+      create unless created?
       @id
     end
 
@@ -152,7 +157,7 @@ module Stampr
     #
     # @return [Stampr::Config]
     def create
-      return if @id # Don't re-create if it already exists.
+      return if created? # Don't re-create if it already exists.
 
       result = Stampr.client.post "configs",
                                   size: size,
