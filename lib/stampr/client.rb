@@ -82,7 +82,7 @@ module Stampr
       path = Array(path).join "/"
       
       response = if params
-         @client[path].public_send action, params, accept: :json
+        @client[path].public_send action, params, accept: :json
       else
         @client[path].public_send action, accept: :json
       end
