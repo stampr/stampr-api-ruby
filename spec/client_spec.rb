@@ -35,7 +35,7 @@ describe Stampr::Client do
 
       server_time = subject.server_time
       server_time.should be_a Time
-      server_time.to_s.should eq time
+      server_time.utc.to_s.should eq "2013-05-16 17:02:47 UTC"
     end
   end
 end
