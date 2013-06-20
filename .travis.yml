@@ -1,4 +1,6 @@
 language: ruby
+bundler_args:
+  --without not_for_travis
 rvm:
   - "1.9.2"
   - "1.9.3"
