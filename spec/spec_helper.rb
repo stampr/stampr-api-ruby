@@ -18,6 +18,11 @@ end
 
 require 'webmock/rspec'
 
+require 'simplecov'
+SimpleCov.start do
+  add_filter "/spec"
+end
+
 require_relative '../lib/stampr'
 
 def json_data(name)
