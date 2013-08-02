@@ -1,0 +1,11 @@
+[
+    {
+        "mailing_id": 1,
+        "address": "bleh1",
+        "returnaddress": "bleh2",
+        "format": "json",
+        "data": "{\"fred\": \"savage\"}",
+        "batch_id": 2,
+        "status": "received"
+    }
+]
